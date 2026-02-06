@@ -98,11 +98,17 @@ def postgres_container():
     """
     Start a PostgreSQL container for integration tests.
     
-    Requires: testcontainers[postgres] and Docker with pgvector image.
+    If DATABASE_URL is set, skip container and use that directly.
+    Otherwise, requires testcontainers[postgres] and Docker with pgvector image.
     
     Pull the image first:
         docker pull pgvector/pgvector:pg16
     """
+    # If DATABASE_URL is set (e.g., in CI), skip container
+    if os.environ.get("DATABASE_URL"):
+        yield None
+        return
+    
     pytest.importorskip("testcontainers")
     
     from testcontainers.postgres import PostgresContainer
@@ -116,7 +122,12 @@ def postgres_container():
 
 @pytest.fixture
 def postgres_url(postgres_container) -> str:
-    """Get the PostgreSQL connection URL from the container."""
+    """Get the PostgreSQL connection URL from the container or env."""
+    # Prefer DATABASE_URL from environment (CI)
+    env_url = os.environ.get("DATABASE_URL")
+    if env_url:
+        return env_url
+    
     url = postgres_container.get_connection_url()
     # Testcontainers returns SQLAlchemy-style URL (postgresql+psycopg://...)
     # but psycopg wants standard postgres URL (postgresql://...)
