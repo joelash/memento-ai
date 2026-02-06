@@ -3,8 +3,9 @@ PostgresStore factory with semantic search via OpenAI embeddings.
 """
 
 import os
+from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Iterator
 from uuid import UUID
 
 from langchain_openai import OpenAIEmbeddings
@@ -23,14 +24,17 @@ DEFAULT_EMBED_MODEL = "text-embedding-3-small"
 DEFAULT_EMBED_DIMS = 1536
 
 
+@contextmanager
 def build_postgres_store(
     conn_str: str | None = None,
     embed_model: str = DEFAULT_EMBED_MODEL,
     dims: int = DEFAULT_EMBED_DIMS,
     embed_fields: list[str] | None = None,
-) -> "SemanticMemoryStore":
+) -> Iterator["SemanticMemoryStore"]:
     """
     Create a SemanticMemoryStore backed by PostgresStore with semantic search.
+
+    This is a context manager that handles connection lifecycle.
 
     Args:
         conn_str: PostgreSQL connection string. Falls back to DATABASE_URL env var.
@@ -38,12 +42,13 @@ def build_postgres_store(
         dims: Embedding dimensions.
         embed_fields: Which fields of the stored value to embed. Default: ["text"].
 
-    Returns:
+    Yields:
         SemanticMemoryStore instance.
 
     Example:
-        store = build_postgres_store("postgresql://user:pass@host:5432/db")
-        store.setup()  # Run once to create tables
+        with build_postgres_store("postgresql://user:pass@host:5432/db") as store:
+            store.setup()  # Run once to create tables
+            store.add(namespace, memory)
     """
     conn_str = conn_str or os.environ.get("DATABASE_URL")
     if not conn_str:
@@ -51,16 +56,15 @@ def build_postgres_store(
 
     embeddings = OpenAIEmbeddings(model=embed_model)
 
-    pg_store = PostgresStore(
-        connection_string=conn_str,
+    with PostgresStore.from_conn_string(
+        conn_str,
         index={
             "dims": dims,
             "embed": embeddings,
             "fields": embed_fields or ["text"],
         },
-    )
-
-    return SemanticMemoryStore(pg_store)
+    ) as pg_store:
+        yield SemanticMemoryStore(pg_store)
 
 
 class SemanticMemoryStore:
@@ -259,8 +263,9 @@ class SemanticMemoryStore:
             query = MemoryQuery(query=query)
 
         # Use PostgresStore's semantic search
+        # namespace_prefix is positional-only in PostgresStore.search
         results = self._store.search(
-            namespace=namespace,
+            namespace,
             query=query.query,
             limit=query.limit * 2,  # Fetch extra to filter
         )
@@ -425,8 +430,8 @@ class SemanticMemoryStore:
         # so we use a broad search. This is not efficient for large stores.
         # TODO: Add proper list support when PostgresStore API allows it.
         results = self._store.search(
-            namespace=namespace,
-            query="",  # Empty query to get all
+            namespace,  # positional-only
+            query=None,  # None to get all without vector search
             limit=1000,
         )
 

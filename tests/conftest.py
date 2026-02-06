@@ -8,6 +8,10 @@ from typing import Generator
 from uuid import uuid4
 
 import pytest
+from dotenv import load_dotenv
+
+# Load .env file for API keys
+load_dotenv()
 
 from ai_semantic_memory.schema import Durability, Memory, MemoryCreate, MemorySource
 
@@ -113,7 +117,10 @@ def postgres_container():
 @pytest.fixture
 def postgres_url(postgres_container) -> str:
     """Get the PostgreSQL connection URL from the container."""
-    return postgres_container.get_connection_url()
+    url = postgres_container.get_connection_url()
+    # Testcontainers returns SQLAlchemy-style URL (postgresql+psycopg://...)
+    # but psycopg wants standard postgres URL (postgresql://...)
+    return url.replace("postgresql+psycopg://", "postgresql://")
 
 
 @pytest.fixture
@@ -127,9 +134,9 @@ def semantic_store(postgres_url: str):
     
     from ai_semantic_memory.store import build_postgres_store
     
-    store = build_postgres_store(postgres_url)
-    store.setup()
-    yield store
+    with build_postgres_store(postgres_url) as store:
+        store.setup()
+        yield store
 
 
 @pytest.fixture

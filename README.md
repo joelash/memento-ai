@@ -26,21 +26,23 @@ pip install -e ".[dev]"
 ## Quick Start
 
 ```python
-from ai_semantic_memory import build_postgres_store, build_memory_graph
+from ai_semantic_memory import build_postgres_store
+from ai_semantic_memory.graph import build_memory_graph
 
-# Connect to your Neon/Postgres DB
-store = build_postgres_store("postgresql://user:pass@host:5432/dbname")
-store.setup()  # Run migrations
+# Connect to your Neon/Postgres DB (context manager handles connection lifecycle)
+with build_postgres_store("postgresql://user:pass@host:5432/dbname") as store:
+    store.setup()  # Run migrations (once)
 
-# Build a graph with memory baked in
-graph = build_memory_graph(store)
+    # Build a graph with memory baked in
+    graph = build_memory_graph()
+    compiled = graph.compile(store=store.raw_store)
 
-# Run it
-config = {"configurable": {"user_id": "user_123"}}
-result = graph.invoke(
-    {"messages": [{"role": "user", "content": "I'm Joel, I live in Wheaton."}]},
-    config=config,
-)
+    # Run it
+    config = {"configurable": {"user_id": "user_123"}}
+    result = compiled.invoke(
+        {"messages": [{"role": "user", "content": "I'm Joel, I live in Wheaton."}]},
+        config=config,
+    )
 ```
 
 ## Memory Schema
