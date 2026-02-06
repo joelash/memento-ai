@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 # Load .env file for API keys
 load_dotenv()
 
-from ai_semantic_memory.schema import Durability, Memory, MemoryCreate, MemorySource
+from engram_ai.schema import Durability, Memory, MemoryCreate, MemorySource
 
 
 # ============================================================================
@@ -143,7 +143,7 @@ def semantic_store(postgres_url: str):
     if not os.environ.get("OPENAI_API_KEY"):
         pytest.skip("OPENAI_API_KEY not set")
     
-    from ai_semantic_memory.store import build_postgres_store
+    from engram_ai.store import build_postgres_store
     
     with build_postgres_store(postgres_url) as store:
         store.setup()

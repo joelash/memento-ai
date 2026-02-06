@@ -2,8 +2,8 @@
 Unit tests for retrieval module.
 """
 
-from ai_semantic_memory.retrieval import RetrievalResult, build_memory_context
-from ai_semantic_memory.schema import Durability, Memory
+from engram_ai.retrieval import RetrievalResult, build_memory_context
+from engram_ai.schema import Durability, Memory
 
 
 class TestRetrievalResult:

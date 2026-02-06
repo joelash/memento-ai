@@ -2,7 +2,7 @@
 ai-semantic-memory: Reusable semantic memory for LangGraph agents.
 """
 
-from ai_semantic_memory.schema import (
+from engram_ai.schema import (
     Durability,
     Memory,
     MemoryCreate,
@@ -10,7 +10,7 @@ from ai_semantic_memory.schema import (
     MemorySource,
     MemoryUpdate,
 )
-from ai_semantic_memory.store import build_postgres_store
+from engram_ai.store import build_postgres_store
 
 __version__ = "0.1.0"
 

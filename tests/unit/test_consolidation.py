@@ -4,7 +4,7 @@ Unit tests for consolidation module.
 
 import pytest
 
-from ai_semantic_memory.consolidation import ConsolidationResult, ConsolidationStrategy
+from engram_ai.consolidation import ConsolidationResult, ConsolidationStrategy
 
 
 class TestConsolidationStrategy:

@@ -8,8 +8,8 @@ import os
 
 import pytest
 
-from ai_semantic_memory.extraction import MemoryExtractor, extract_memories
-from ai_semantic_memory.schema import Durability
+from engram_ai.extraction import MemoryExtractor, extract_memories
+from engram_ai.schema import Durability
 
 
 @pytest.fixture

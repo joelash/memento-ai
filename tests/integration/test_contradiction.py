@@ -8,11 +8,11 @@ import os
 
 import pytest
 
-from ai_semantic_memory.contradiction import (
+from engram_ai.contradiction import (
     ContradictionDetector,
     add_memory_with_contradiction_check,
 )
-from ai_semantic_memory.schema import Durability, Memory
+from engram_ai.schema import Durability, Memory
 
 
 @pytest.fixture

@@ -19,8 +19,8 @@ from dotenv import load_dotenv
 # Load .env file if present
 load_dotenv()
 
-from ai_semantic_memory import build_postgres_store
-from ai_semantic_memory.graph import build_memory_graph
+from engram_ai import build_postgres_store
+from engram_ai.graph import build_memory_graph
 
 
 def main():
@@ -88,8 +88,8 @@ def demo_memories():
         print("ERROR: DATABASE_URL not set")
         return
 
-    from ai_semantic_memory import MemoryCreate
-    from ai_semantic_memory.schema import Durability
+    from engram_ai import MemoryCreate
+    from engram_ai.schema import Durability
 
     with build_postgres_store(db_url) as store:
         store.setup()

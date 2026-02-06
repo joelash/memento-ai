@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="assets/logo.png" alt="ai-semantic-memory logo" width="200">
+  <img src="assets/logo.png" alt="engram-ai logo" width="200">
 </p>
 
-<h1 align="center">ai-semantic-memory</h1>
+<h1 align="center">engram-ai</h1>
 
 <p align="center">
-  <em>Reusable semantic memory library for LangGraph agents</em>
+  <em>Long-term semantic memory for LangGraph agents</em>
 </p>
 
 ---
@@ -22,22 +22,22 @@ Drop-in long-term memory with:
 ## Installation
 
 ```bash
-pip install ai-semantic-memory
+pip install engram-ai
 ```
 
 Or for development:
 
 ```bash
-git clone https://github.com/joelash/ai-semantic-memory
-cd ai-semantic-memory
+git clone https://github.com/joelash/engram-ai
+cd engram-ai
 pip install -e ".[dev]"
 ```
 
 ## Quick Start
 
 ```python
-from ai_semantic_memory import build_postgres_store
-from ai_semantic_memory.graph import build_memory_graph
+from engram_ai import build_postgres_store
+from engram_ai.graph import build_memory_graph
 
 # Connect to your Neon/Postgres DB (context manager handles connection lifecycle)
 with build_postgres_store("postgresql://user:pass@host:5432/dbname") as store:
@@ -114,7 +114,7 @@ retrieve_memories(
 ### Memory Consolidation
 
 ```python
-from ai_semantic_memory import consolidate_memories
+from engram_ai import consolidate_memories
 
 # Periodic cleanup job
 consolidate_memories(
@@ -130,7 +130,7 @@ consolidate_memories(
 Pre-built nodes for your graph:
 
 ```python
-from ai_semantic_memory.nodes import (
+from engram_ai.nodes import (
     retrieve_memories_node,
     store_memories_node,
     consolidate_memories_node,

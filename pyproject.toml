@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "ai-semantic-memory"
+name = "engram-ai"
 version = "0.1.0"
 description = "Reusable semantic memory library for LangGraph agents with PostgreSQL/pgvector"
 readme = "README.md"
@@ -43,10 +43,10 @@ dev = [
 ]
 
 [project.urls]
-Repository = "https://github.com/joelash/ai-semantic-memory"
+Repository = "https://github.com/joelash/engram-ai"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/ai_semantic_memory"]
+packages = ["src/engram_ai"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

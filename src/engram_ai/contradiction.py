@@ -9,8 +9,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-from ai_semantic_memory.schema import Memory, MemorySource, MemoryUpdate
-from ai_semantic_memory.store import SemanticMemoryStore
+from engram_ai.schema import Memory, MemorySource, MemoryUpdate
+from engram_ai.store import SemanticMemoryStore
 
 DEFAULT_MODEL = "gpt-4.1-mini"
 
@@ -233,7 +233,7 @@ def add_memory_with_contradiction_check(
     Returns:
         Tuple of (created Memory, ContradictionCheck if contradiction was resolved).
     """
-    from ai_semantic_memory.schema import MemoryCreate
+    from engram_ai.schema import MemoryCreate
 
     detector = detector or ContradictionDetector()
 

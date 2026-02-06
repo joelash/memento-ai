@@ -10,8 +10,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-from ai_semantic_memory.schema import Durability, Memory, MemoryCreate, MemorySource
-from ai_semantic_memory.store import SemanticMemoryStore
+from engram_ai.schema import Durability, Memory, MemoryCreate, MemorySource
+from engram_ai.store import SemanticMemoryStore
 
 DEFAULT_MODEL = "gpt-4.1-mini"
 

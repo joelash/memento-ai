@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import pytest
 
-from ai_semantic_memory.schema import (
+from engram_ai.schema import (
     Durability,
     Memory,
     MemoryCreate,

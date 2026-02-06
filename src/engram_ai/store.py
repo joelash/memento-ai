@@ -11,7 +11,7 @@ from uuid import UUID
 from langchain_openai import OpenAIEmbeddings
 from langgraph.store.postgres import PostgresStore
 
-from ai_semantic_memory.schema import (
+from engram_ai.schema import (
     Durability,
     Memory,
     MemoryCreate,
