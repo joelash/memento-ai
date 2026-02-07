@@ -99,12 +99,20 @@ function App() {
             engram-ai demo
           </h1>
         </div>
-        <button
-          onClick={clearMemories}
-          className="px-3 py-1.5 text-sm bg-red-600/20 text-red-400 rounded hover:bg-red-600/30 transition"
-        >
-          Clear Memories
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMessages([])}
+            className="px-3 py-1.5 text-sm bg-purple-600/20 text-purple-400 rounded hover:bg-purple-600/30 transition"
+          >
+            New Chat
+          </button>
+          <button
+            onClick={clearMemories}
+            className="px-3 py-1.5 text-sm bg-red-600/20 text-red-400 rounded hover:bg-red-600/30 transition"
+          >
+            Clear Memories
+          </button>
+        </div>
       </header>
 
       {/* Main content */}
@@ -116,6 +124,11 @@ function App() {
               <div className="text-center text-gray-500 mt-8">
                 <p className="text-lg">👋 Start a conversation!</p>
                 <p className="text-sm mt-2">Tell me about yourself and I'll remember it.</p>
+                {memories.length > 0 && (
+                  <p className="text-sm mt-4 text-purple-400">
+                    ✨ I already know {memories.length} thing{memories.length === 1 ? '' : 's'} about you!
+                  </p>
+                )}
               </div>
             )}
             {messages.map((msg, i) => (

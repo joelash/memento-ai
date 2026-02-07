@@ -5,13 +5,15 @@ FastAPI backend for the memory demo.
 """
 
 import os
+import threading
 from contextlib import asynccontextmanager
-from datetime import datetime
+from functools import wraps
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_openai import ChatOpenAI
+from psycopg import OperationalError
 from pydantic import BaseModel
 
 from engram_ai import MemoryCreate, build_postgres_store
@@ -20,27 +22,71 @@ from engram_ai.schema import Durability, Memory
 
 load_dotenv()
 
-# Global store reference (managed by lifespan)
-store = None
-store_context = None
+# Global store reference with lock for thread safety
+_store = None
+_store_context = None
+_store_lock = threading.Lock()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Manage database connection lifecycle."""
-    global store, store_context
+def get_store():
+    """Get or create the store, reconnecting if needed."""
+    global _store, _store_context
+    
+    with _store_lock:
+        if _store is None:
+            _reconnect()
+        return _store
+
+
+def _reconnect():
+    """Create a fresh database connection."""
+    global _store, _store_context
+    
+    # Clean up old connection if any
+    if _store_context is not None:
+        try:
+            _store_context.__exit__(None, None, None)
+        except Exception:
+            pass
     
     db_url = os.environ.get("DATABASE_URL")
     if not db_url:
         raise RuntimeError("DATABASE_URL not set")
     
-    store_context = build_postgres_store(db_url)
-    store = store_context.__enter__()
-    store.setup()
+    _store_context = build_postgres_store(db_url)
+    _store = _store_context.__enter__()
+    _store.setup()
+
+
+def with_reconnect(f):
+    """Decorator that retries once on connection error."""
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        global _store
+        try:
+            return f(*args, **kwargs)
+        except OperationalError:
+            # Connection dropped, reconnect and retry once
+            with _store_lock:
+                _store = None  # Force reconnect
+            return f(*args, **kwargs)
+    return wrapper
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize database on startup, cleanup on shutdown."""
+    global _store, _store_context
+    
+    _reconnect()
     
     yield
     
-    store_context.__exit__(None, None, None)
+    if _store_context is not None:
+        try:
+            _store_context.__exit__(None, None, None)
+        except Exception:
+            pass
 
 
 app = FastAPI(title="engram-ai Demo", lifespan=lifespan)
@@ -88,8 +134,10 @@ def root():
 
 
 @app.post("/chat", response_model=ChatResponse)
+@with_reconnect
 def chat(req: ChatRequest):
     """Send a message and get a response with memory context."""
+    store = get_store()
     
     # 1. Retrieve relevant memories
     memories = store.search(NAMESPACE, req.message)
@@ -137,22 +185,28 @@ Use your memories about the user when relevant. Be conversational and friendly.
 
 
 @app.get("/memories", response_model=list[MemoryResponse])
+@with_reconnect
 def list_memories():
     """Get all current memories."""
+    store = get_store()
     memories = store.list_all(NAMESPACE, include_superseded=False)
     return [_memory_to_dict(m) for m in memories]
 
 
 @app.get("/memories/history", response_model=list[MemoryResponse])
+@with_reconnect
 def list_all_memories():
     """Get all memories including superseded (version history)."""
+    store = get_store()
     memories = store.list_all(NAMESPACE, include_superseded=True)
     return [_memory_to_dict(m) for m in memories]
 
 
 @app.delete("/memories")
+@with_reconnect
 def clear_memories():
     """Clear all memories (reset demo)."""
+    store = get_store()
     memories = store.list_all(NAMESPACE, include_superseded=True)
     for mem in memories:
         store.delete(NAMESPACE, mem.id)
@@ -160,8 +214,10 @@ def clear_memories():
 
 
 @app.get("/memories/{memory_id}/history")
+@with_reconnect
 def get_memory_history(memory_id: str):
     """Get version history for a specific memory."""
+    store = get_store()
     history = store.get_version_history(NAMESPACE, memory_id)
     return [_memory_to_dict(m) for m in history]
 
