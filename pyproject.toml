@@ -5,14 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "engram-ai"
 version = "0.2.0"
-description = "Reusable semantic memory library for LangGraph agents with PostgreSQL/pgvector"
+description = "Reusable semantic memory library for LangGraph agents with PostgreSQL/pgvector and SQLite backends"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [
     { name = "Joel Ash" }
 ]
-keywords = ["langgraph", "memory", "semantic", "ai", "agents", "postgres", "pgvector"]
+keywords = ["langgraph", "memory", "semantic", "ai", "agents", "postgres", "pgvector", "sqlite"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -33,6 +33,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+sqlite = [
+    "sqlite-vec>=0.1.0",  # Vector search extension for SQLite
+]
+duckdb = [
+    "duckdb>=1.0.0",  # DuckDB with native vector similarity
+]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
@@ -40,6 +46,10 @@ dev = [
     "ruff>=0.4.0",
     "mypy>=1.10.0",
     "testcontainers[postgres]>=4.0.0",  # for integration tests
+    "duckdb>=1.0.0",  # for DuckDB tests
+]
+all = [
+    "engram-ai[sqlite,duckdb,dev]",
 ]
 
 [project.urls]

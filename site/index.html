@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>engram-ai — Memory for AI Agents</title>
+    <meta name="description" content="Production-grade semantic memory for LangGraph agents. Open source, multi-backend, actually works.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0a0a0b;
+            --surface: #141415;
+            --border: #27272a;
+            --text: #fafafa;
+            --text-muted: #a1a1aa;
+            --purple: #a855f7;
+            --purple-dim: #7c3aed;
+            --green: #22c55e;
+        }
+
+        [data-theme="light"] {
+            --bg: #ffffff;
+            --surface: #f4f4f5;
+            --border: #e4e4e7;
+            --text: #18181b;
+            --text-muted: #52525b;
+            --purple: #7c3aed;
+            --purple-dim: #6d28d9;
+            --green: #16a34a;
+            --code-bg: #f8f8f8;
+            --code-text: #383a42;
+            --code-keyword: #a626a4;
+            --code-string: #50a14f;
+            --code-function: #4078f2;
+            --code-comment: #a0a1a7;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Nav */
+        nav {
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo img {
+            border-radius: 6px;
+        }
+
+        .logo span {
+            color: var(--purple);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text);
+        }
+
+        /* Hero */
+        .hero {
+            padding: 100px 0 80px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--purple) 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--purple);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--purple-dim);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--text-muted);
+        }
+
+        /* Code block */
+        .code-preview {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 60px auto 0;
+            max-width: 700px;
+            text-align: left;
+            overflow-x: auto;
+        }
+
+        .code-preview code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .code-preview .comment { color: #6b7280; }
+        .code-preview .keyword { color: #c084fc; }
+        .code-preview .string { color: #4ade80; }
+        .code-preview .function { color: #60a5fa; }
+
+        /* Problem section */
+        .problem {
+            padding: 100px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .problem h2 {
+            font-size: 2rem;
+            margin-bottom: 48px;
+            text-align: center;
+        }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .problem-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .problem-card .icon {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+        }
+
+        .problem-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        .problem-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Features */
+        .features {
+            padding: 100px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .features h2 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .features .subtitle {
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+
+        .feature {
+            padding: 24px;
+        }
+
+        .feature h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature h3::before {
+            content: "✓";
+            color: var(--green);
+            font-weight: bold;
+        }
+
+        .feature p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 100px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+
+        .cta-section .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 48px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .cta-box h3 {
+            font-size: 1.5rem;
+            margin-bottom: 24px;
+        }
+
+        .pricing {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .price-item {
+            text-align: center;
+        }
+
+        .price-item .price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--purple);
+        }
+
+        .price-item .label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: var(--text);
+        }
+
+        /* Theme toggle */
+        .theme-toggle {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            line-height: 1;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--text-muted);
+        }
+
+        .theme-toggle svg {
+            display: block;
+        }
+
+        [data-theme="light"] .icon-moon { display: none !important; }
+        [data-theme="light"] .icon-sun { display: block !important; }
+
+        /* Light mode specific adjustments */
+        [data-theme="light"] .code-preview {
+            background: var(--code-bg);
+            border-color: var(--border);
+        }
+
+        [data-theme="light"] .code-preview code {
+            color: var(--code-text);
+        }
+
+        [data-theme="light"] .code-preview .keyword {
+            color: var(--code-keyword);
+        }
+
+        [data-theme="light"] .code-preview .string {
+            color: var(--code-string);
+        }
+
+        [data-theme="light"] .code-preview .function {
+            color: var(--code-function);
+        }
+
+        [data-theme="light"] .code-preview .comment {
+            color: var(--code-comment);
+        }
+
+        [data-theme="light"] .hero h1 .highlight {
+            background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        [data-theme="light"] .btn-primary {
+            background: #7c3aed;
+            color: #ffffff;
+        }
+
+        [data-theme="light"] .btn-primary:hover {
+            background: #6d28d9;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .hero {
+                padding: 60px 0;
+            }
+
+            .code-preview {
+                margin: 40px auto 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <a href="/" class="logo"><img src="logo.png" alt="engram-ai" width="36" height="36"> engram<span>-ai</span></a>
+            <div class="nav-links">
+                <a href="https://github.com/joelash/engram-ai">GitHub</a>
+                <a href="https://github.com/joelash/engram-ai#quick-start">Docs</a>
+                <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                    <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                </button>
+                <a href="https://calendar.notion.so/meet/joelfriedman/ai-memory-consult" class="btn btn-primary" style="padding: 10px 20px;">Book a Call</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Your AI agents keep <span class="highlight">forgetting</span>.<br>Let's fix that.</h1>
+            <p class="subtitle">Production-grade semantic memory for LangGraph agents. Open source, multi-backend, actually works.</p>
+            <div class="cta-buttons">
+                <a href="https://github.com/joelash/engram-ai" class="btn btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    Get Started
+                </a>
+                <a href="https://calendar.notion.so/meet/joelfriedman/ai-memory-consult" class="btn btn-secondary">Book a Setup Call</a>
+            </div>
+            <div class="code-preview">
+                <code>
+<span class="keyword">from</span> engram_ai <span class="keyword">import</span> build_store, MemoryCreate<br><br>
+<span class="keyword">with</span> <span class="function">build_store</span>(<span class="string">"postgresql://..."</span>) <span class="keyword">as</span> store:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># Remember something</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;store.<span class="function">add</span>(namespace, <span class="function">MemoryCreate</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text=<span class="string">"User prefers dark mode"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;durability=<span class="string">"core"</span>,  <span class="comment"># Never forget</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;))<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># Recall it later</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;memories = store.<span class="function">search</span>(namespace, <span class="string">"user preferences"</span>)
+                </code>
+            </div>
+        </div>
+    </section>
+
+    <section class="problem">
+        <div class="container">
+            <h2>The problem with AI agents today</h2>
+            <div class="problem-grid">
+                <div class="problem-card">
+                    <div class="icon">🧠</div>
+                    <h3>Session amnesia</h3>
+                    <p>Agent forgets everything when the conversation ends. Every session starts from zero.</p>
+                </div>
+                <div class="problem-card">
+                    <div class="icon">🔄</div>
+                    <h3>Repeated questions</h3>
+                    <p>"What's your name again?" for the 10th time. Users get frustrated.</p>
+                </div>
+                <div class="problem-card">
+                    <div class="icon">⚡</div>
+                    <h3>No personalization</h3>
+                    <p>Can't learn preferences over time. Every user gets the same generic experience.</p>
+                </div>
+                <div class="problem-card">
+                    <div class="icon">💥</div>
+                    <h3>Contradictions</h3>
+                    <p>Old facts conflict with new ones. No audit trail. Chaos ensues.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <h2>What makes engram-ai different</h2>
+            <p class="subtitle">Built for production, not demos.</p>
+            <div class="feature-grid">
+                <div class="feature">
+                    <h3>Version chains</h3>
+                    <p>When facts change, we create an audit trail. Debug why your agent thinks what it thinks.</p>
+                </div>
+                <div class="feature">
+                    <h3>Durability tiers</h3>
+                    <p>Core facts (forever), situational context (temporary), episodic memories (decay over time).</p>
+                </div>
+                <div class="feature">
+                    <h3>Multi-backend</h3>
+                    <p>Postgres for production, SQLite for dev, DuckDB for analytics. No vendor lock-in.</p>
+                </div>
+                <div class="feature">
+                    <h3>LangGraph native</h3>
+                    <p>Built specifically for LangGraph. Drop-in nodes for retrieve, store, and consolidate.</p>
+                </div>
+                <div class="feature">
+                    <h3>Lightweight</h3>
+                    <p>No torch, no CUDA, no gigabytes of dependencies. Just memory.</p>
+                </div>
+                <div class="feature">
+                    <h3>Open source</h3>
+                    <p>MIT licensed. Run it wherever you want. No strings attached.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <div class="container">
+            <h2>Need help implementing?</h2>
+            <p class="subtitle">I'll add production-grade memory to your AI agent in 1-2 weeks.</p>
+            <div class="cta-box">
+                <h3>Let's talk</h3>
+                <div class="pricing">
+                    <div class="price-item">
+                        <div class="price">$500</div>
+                        <div class="label">Consult (2 hours)</div>
+                    </div>
+                    <div class="price-item">
+                        <div class="price">$3-5k</div>
+                        <div class="label">Full implementation</div>
+                    </div>
+                </div>
+                <a href="https://calendar.notion.so/meet/joelfriedman/ai-memory-consult" class="btn btn-primary">Book a Call →</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>Built by <a href="https://twitter.com/joelash">@joelash</a> · <a href="https://github.com/joelash/engram-ai">GitHub</a> · MIT License</p>
+        </div>
+    </footer>
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            
+            if (html.getAttribute('data-theme') === 'light') {
+                html.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Load saved theme on page load
+        (function() {
+            const saved = localStorage.getItem('theme');
+            
+            if (saved === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else if (!saved) {
+                // Check system preference
+                if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                }
+            }
+        })();
+    </script>
+</body>
+</html>

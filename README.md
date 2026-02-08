@@ -19,6 +19,17 @@ Drop-in long-term memory with:
 - **Memory consolidation** — decay, summarize, and prune old memories
 - **LangGraph integration** — ready-to-use nodes for retrieve/store/consolidate
 
+## Need Help?
+
+**I'll add production-grade memory to your AI agent in 1-2 weeks.**
+
+- 📞 **Consult** ($500) — 2-hour architecture deep-dive
+- 🛠️ **Implementation** ($3-5k) — Full memory system, integrated + tested
+
+[Book a Call →](https://calendar.notion.so/meet/joelfriedman/ai-memory-consult)
+
+---
+
 ## Installation
 
 ```bash
