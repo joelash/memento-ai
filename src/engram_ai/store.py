@@ -1,16 +1,21 @@
 """
-PostgresStore factory with semantic search via OpenAI embeddings.
+Semantic memory store with support for multiple backends.
+
+Supports:
+- PostgreSQL with pgvector (production)
+- SQLite with sqlite-vec (development/testing)
 """
 
 import os
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 from uuid import UUID
 
-from langchain_openai import OpenAIEmbeddings
-from langgraph.store.postgres import PostgresStore
-
+from engram_ai.backends.base import BaseStore
+from engram_ai.backends.factory import build_store as _build_backend
+from engram_ai.backends.postgres import DEFAULT_EMBED_DIMS, DEFAULT_EMBED_MODEL
 from engram_ai.schema import (
     Memory,
     MemoryCreate,
@@ -18,11 +23,63 @@ from engram_ai.schema import (
     MemoryUpdate,
 )
 
-# Default embedding model
-DEFAULT_EMBED_MODEL = "text-embedding-3-small"
-DEFAULT_EMBED_DIMS = 1536
+if TYPE_CHECKING:
+    from langgraph.store.postgres import PostgresStore
 
 
+@contextmanager
+def build_store(
+    url: str | None = None,
+    embed_model: str = DEFAULT_EMBED_MODEL,
+    dims: int = DEFAULT_EMBED_DIMS,
+    embed_fields: list[str] | None = None,
+) -> Iterator["SemanticMemoryStore"]:
+    """
+    Create a SemanticMemoryStore with automatic backend selection.
+
+    Backend is chosen based on URL scheme:
+    - postgresql://, postgres:// → PostgreSQL with pgvector
+    - sqlite:/// → SQLite with sqlite-vec
+    - :memory: → SQLite in-memory (testing)
+
+    Args:
+        url: Database URL. Falls back to DATABASE_URL env var.
+        embed_model: OpenAI embedding model name.
+        dims: Embedding dimensions.
+        embed_fields: Fields to embed. Default: ["text"].
+
+    Yields:
+        SemanticMemoryStore instance.
+
+    Examples:
+        # PostgreSQL (production)
+        with build_store("postgresql://user:pass@host:5432/db") as store:
+            store.setup()
+            store.add(namespace, memory)
+
+        # SQLite (development)
+        with build_store("sqlite:///./dev.db") as store:
+            store.setup()
+            store.add(namespace, memory)
+
+        # In-memory (testing)
+        with build_store(":memory:") as store:
+            store.setup()
+            store.add(namespace, memory)
+    """
+    backend = _build_backend(
+        url=url,
+        embed_model=embed_model,
+        dims=dims,
+        embed_fields=embed_fields,
+    )
+    try:
+        yield SemanticMemoryStore(backend)
+    finally:
+        backend.close()
+
+
+# Backward-compatible alias
 @contextmanager
 def build_postgres_store(
     conn_str: str | None = None,
@@ -31,58 +88,100 @@ def build_postgres_store(
     embed_fields: list[str] | None = None,
 ) -> Iterator["SemanticMemoryStore"]:
     """
-    Create a SemanticMemoryStore backed by PostgresStore with semantic search.
+    Create a SemanticMemoryStore backed by PostgreSQL.
 
-    This is a context manager that handles connection lifecycle.
+    This is a backward-compatible alias for build_store() with PostgreSQL.
 
     Args:
         conn_str: PostgreSQL connection string. Falls back to DATABASE_URL env var.
         embed_model: OpenAI embedding model name.
         dims: Embedding dimensions.
-        embed_fields: Which fields of the stored value to embed. Default: ["text"].
+        embed_fields: Fields to embed. Default: ["text"].
 
     Yields:
         SemanticMemoryStore instance.
-
-    Example:
-        with build_postgres_store("postgresql://user:pass@host:5432/db") as store:
-            store.setup()  # Run once to create tables
-            store.add(namespace, memory)
     """
     conn_str = conn_str or os.environ.get("DATABASE_URL")
     if not conn_str:
         raise ValueError("Connection string required. Pass conn_str or set DATABASE_URL.")
 
-    embeddings = OpenAIEmbeddings(model=embed_model)
+    # Ensure it's a postgres URL
+    if not conn_str.startswith(("postgresql://", "postgres://")):
+        conn_str = f"postgresql://{conn_str}"
 
-    with PostgresStore.from_conn_string(
-        conn_str,
-        index={
-            "dims": dims,
-            "embed": embeddings,
-            "fields": embed_fields or ["text"],
-        },
-    ) as pg_store:
-        yield SemanticMemoryStore(pg_store)
+    with build_store(
+        url=conn_str,
+        embed_model=embed_model,
+        dims=dims,
+        embed_fields=embed_fields,
+    ) as store:
+        yield store
+
+
+@contextmanager
+def build_sqlite_store(
+    db_path: str | None = None,
+    embed_model: str = DEFAULT_EMBED_MODEL,
+    dims: int = DEFAULT_EMBED_DIMS,
+    embed_fields: list[str] | None = None,
+) -> Iterator["SemanticMemoryStore"]:
+    """
+    Create a SemanticMemoryStore backed by SQLite.
+
+    Great for local development and testing.
+
+    Args:
+        db_path: Path to SQLite database. Falls back to MEMORY_DB_PATH env var
+                 or "engram.db".
+        embed_model: OpenAI embedding model name.
+        dims: Embedding dimensions.
+        embed_fields: Fields to embed. Default: ["text"].
+
+    Yields:
+        SemanticMemoryStore instance.
+
+    Examples:
+        # Local file
+        with build_sqlite_store("./dev.db") as store:
+            store.setup()
+            store.add(namespace, memory)
+
+        # In-memory (testing)
+        with build_sqlite_store(":memory:") as store:
+            store.setup()
+            store.add(namespace, memory)
+    """
+    if db_path is None:
+        db_path = os.environ.get("MEMORY_DB_PATH", "engram.db")
+
+    url = ":memory:" if db_path == ":memory:" else f"sqlite:///{db_path}"
+
+    with build_store(
+        url=url,
+        embed_model=embed_model,
+        dims=dims,
+        embed_fields=embed_fields,
+    ) as store:
+        yield store
 
 
 class SemanticMemoryStore:
     """
     High-level memory store with durability tiers, version chains, and temporal awareness.
 
-    Wraps PostgresStore and provides:
+    Wraps a backend store (PostgreSQL, SQLite, etc.) and provides:
     - Typed memory operations (add, update, search, delete)
     - Version chain management for contradiction handling
     - Temporal validity filtering
     - Scoped namespace support
     """
 
-    def __init__(self, pg_store: PostgresStore):
-        self._store = pg_store
+    def __init__(self, backend: BaseStore):
+        self._store = backend
 
     @property
-    def raw_store(self) -> PostgresStore:
-        """Access the underlying PostgresStore for advanced operations."""
+    def raw_store(self) -> BaseStore:
+        """Access the underlying backend store for advanced operations."""
         return self._store
 
     def setup(self) -> None:
@@ -261,8 +360,7 @@ class SemanticMemoryStore:
         if isinstance(query, str):
             query = MemoryQuery(query=query)
 
-        # Use PostgresStore's semantic search
-        # namespace_prefix is positional-only in PostgresStore.search
+        # Use backend's semantic search
         results = self._store.search(
             namespace,
             query=query.query,
@@ -425,11 +523,8 @@ class SemanticMemoryStore:
         Returns:
             List of memories.
         """
-        # PostgresStore doesn't have a direct list method with namespace filtering,
-        # so we use a broad search. This is not efficient for large stores.
-        # TODO: Add proper list support when PostgresStore API allows it.
         results = self._store.search(
-            namespace,  # positional-only
+            namespace,
             query=None,  # None to get all without vector search
             limit=1000,
         )
