@@ -26,6 +26,17 @@
             --green: #22c55e;
         }
 
+        [data-theme="light"] {
+            --bg: #ffffff;
+            --surface: #f4f4f5;
+            --border: #e4e4e7;
+            --text: #18181b;
+            --text-muted: #71717a;
+            --purple: #9333ea;
+            --purple-dim: #7c3aed;
+            --green: #16a34a;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg);
@@ -333,6 +344,39 @@
             color: var(--text);
         }
 
+        /* Theme toggle */
+        .theme-toggle {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            line-height: 1;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--text-muted);
+        }
+
+        /* Light mode specific adjustments */
+        [data-theme="light"] .code-preview {
+            background: #1e1e1e;
+            border-color: #333;
+        }
+
+        [data-theme="light"] .code-preview code {
+            color: #d4d4d4;
+        }
+
+        [data-theme="light"] .hero h1 .highlight {
+            background: linear-gradient(135deg, #9333ea 0%, #db2777 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
         /* Responsive */
         @media (max-width: 640px) {
             .nav-links {
@@ -356,6 +400,7 @@
             <div class="nav-links">
                 <a href="https://github.com/joelash/engram-ai">GitHub</a>
                 <a href="https://github.com/joelash/engram-ai#quick-start">Docs</a>
+                <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
                 <a href="https://calendar.notion.so/meet/joelfriedman/ai-memory-consult" class="btn btn-primary" style="padding: 10px 20px;">Book a Call</a>
             </div>
         </div>
@@ -475,5 +520,39 @@
             <p>Built by <a href="https://twitter.com/joelash">@joelash</a> · <a href="https://github.com/joelash/engram-ai">GitHub</a> · MIT License</p>
         </div>
     </footer>
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const toggle = document.querySelector('.theme-toggle');
+            
+            if (html.getAttribute('data-theme') === 'light') {
+                html.removeAttribute('data-theme');
+                toggle.textContent = '🌙';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.setAttribute('data-theme', 'light');
+                toggle.textContent = '☀️';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Load saved theme on page load
+        (function() {
+            const saved = localStorage.getItem('theme');
+            const toggle = document.querySelector('.theme-toggle');
+            
+            if (saved === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                if (toggle) toggle.textContent = '☀️';
+            } else if (!saved) {
+                // Check system preference
+                if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    if (toggle) toggle.textContent = '☀️';
+                }
+            }
+        })();
+    </script>
 </body>
 </html>
