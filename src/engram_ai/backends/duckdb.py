@@ -53,11 +53,18 @@ class DuckDBBackend(BaseStore):
             motherduck_token: MotherDuck API token (can also use MOTHERDUCK_TOKEN env).
         """
         self._db_path = str(db_path)
-        self._embeddings = OpenAIEmbeddings(model=embed_model)
+        self._embed_model = embed_model
+        self._embeddings: OpenAIEmbeddings | None = None  # Lazy-loaded
         self._dims = dims
         self._embed_fields = embed_fields or ["text"]
         self._motherduck_token = motherduck_token or os.environ.get("MOTHERDUCK_TOKEN")
         self._conn = None
+
+    def _get_embeddings(self) -> OpenAIEmbeddings:
+        """Lazy-load embeddings client on first use."""
+        if self._embeddings is None:
+            self._embeddings = OpenAIEmbeddings(model=self._embed_model)
+        return self._embeddings
 
     def _ensure_connected(self):
         """Ensure we have an active connection."""
@@ -115,7 +122,7 @@ class DuckDBBackend(BaseStore):
         if not text:
             return [0.0] * self._dims
 
-        embedding = self._embeddings.embed_query(text)
+        embedding = self._get_embeddings().embed_query(text)
         return embedding
 
     def put(
@@ -199,7 +206,7 @@ class DuckDBBackend(BaseStore):
             ]
 
         # Semantic search using cosine similarity
-        query_embedding = self._embeddings.embed_query(query)
+        query_embedding = self._get_embeddings().embed_query(query)
 
         # DuckDB cosine similarity using list_cosine_similarity
         results = conn.execute("""

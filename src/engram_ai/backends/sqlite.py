@@ -58,11 +58,18 @@ class SQLiteBackend(BaseStore):
             embed_fields: Fields to embed (default: ["text"]).
         """
         self._db_path = str(db_path)
-        self._embeddings = OpenAIEmbeddings(model=embed_model)
+        self._embed_model = embed_model
+        self._embeddings: OpenAIEmbeddings | None = None  # Lazy-loaded
         self._dims = dims
         self._embed_fields = embed_fields or ["text"]
         self._conn: sqlite3.Connection | None = None
         self._vec_available = False
+
+    def _get_embeddings(self) -> OpenAIEmbeddings:
+        """Lazy-load embeddings client on first use."""
+        if self._embeddings is None:
+            self._embeddings = OpenAIEmbeddings(model=self._embed_model)
+        return self._embeddings
 
     def _ensure_connected(self) -> sqlite3.Connection:
         """Ensure we have an active connection."""
@@ -137,7 +144,7 @@ class SQLiteBackend(BaseStore):
             return [0.0] * self._dims
 
         # Get embedding from OpenAI
-        embedding = self._embeddings.embed_query(text)
+        embedding = self._get_embeddings().embed_query(text)
         return embedding
 
     def put(
@@ -257,7 +264,7 @@ class SQLiteBackend(BaseStore):
             ]
 
         # Semantic search
-        query_embedding = self._embeddings.embed_query(query)
+        query_embedding = self._get_embeddings().embed_query(query)
 
         if self._vec_available:
             # Use sqlite-vec for efficient search

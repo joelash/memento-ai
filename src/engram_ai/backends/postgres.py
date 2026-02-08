@@ -38,11 +38,18 @@ class PostgresBackend(BaseStore):
             embed_fields: Fields to embed (default: ["text"]).
         """
         self._conn_str = conn_str
-        self._embeddings = OpenAIEmbeddings(model=embed_model)
+        self._embed_model = embed_model
+        self._embeddings: OpenAIEmbeddings | None = None  # Lazy-loaded
         self._dims = dims
         self._embed_fields = embed_fields or ["text"]
         self._store: PostgresStore | None = None
         self._context = None
+
+    def _get_embeddings(self) -> OpenAIEmbeddings:
+        """Lazy-load embeddings client on first use."""
+        if self._embeddings is None:
+            self._embeddings = OpenAIEmbeddings(model=self._embed_model)
+        return self._embeddings
 
     def _ensure_connected(self) -> PostgresStore:
         """Ensure we have an active connection."""
@@ -51,7 +58,7 @@ class PostgresBackend(BaseStore):
                 self._conn_str,
                 index={
                     "dims": self._dims,
-                    "embed": self._embeddings,
+                    "embed": self._get_embeddings(),
                     "fields": self._embed_fields,
                 },
             )
