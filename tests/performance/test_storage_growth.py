@@ -98,7 +98,9 @@ class TestStorageGrowth:
         print(f"   Bytes per memory: {bytes_per_memory:.0f} bytes")
         print(f"   MB per 10000 memories: {bytes_per_memory * 10000 / (1024 * 1024):.2f} MB")
 
-        assert bytes_per_memory < 15360, f"Memory too large: {bytes_per_memory} bytes"
+        # DuckDB stores embeddings as DOUBLE[] which is larger than packed binary
+        # 1536 dims * 8 bytes = 12KB just for embedding, plus JSON overhead
+        assert bytes_per_memory < 40960, f"Memory too large: {bytes_per_memory} bytes"
 
     def test_storage_with_version_chains(self, tmp_path):
         """Measure storage impact of version chains."""

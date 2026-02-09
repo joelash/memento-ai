@@ -158,6 +158,41 @@ builder.add_edge("llm", "store")
 builder.add_edge("store", END)
 ```
 
+## Performance & Costs
+
+### Storage Requirements
+
+| Scale | Memories | SQLite | DuckDB | Postgres |
+|-------|----------|--------|--------|----------|
+| Light user | 100 | ~700 KB | ~3 MB | ~700 KB |
+| Regular user | 1,000 | ~7 MB | ~30 MB | ~7 MB |
+| Heavy user | 10,000 | ~70 MB | ~300 MB | ~70 MB |
+| Power user | 100,000 | ~700 MB | ~3 GB | ~700 MB |
+
+*Embeddings dominate storage: 1536 dims × 4 bytes = ~6KB per memory*
+
+### API Costs (text-embedding-3-small)
+
+| Usage | Daily Tokens | Daily Cost | Monthly Cost |
+|-------|--------------|------------|--------------|
+| Light (100 adds, 500 searches) | 7,000 | $0.0001 | $0.00 |
+| Medium (500 adds, 2,000 searches) | 30,000 | $0.0006 | $0.02 |
+| Heavy (2,000 adds, 10,000 searches) | 140,000 | $0.0028 | $0.08 |
+
+### Extraction Costs (gpt-4.1-mini)
+
+If using LLM-based memory extraction:
+
+| Usage | Daily Cost | Monthly Cost |
+|-------|------------|--------------|
+| Light (50 extractions) | $0.007 | $0.20 |
+| Medium (200 extractions) | $0.027 | $0.81 |
+| Heavy (1,000 extractions) | $0.135 | $4.05 |
+
+**Total cost for a typical agent (100 conversations/day):** ~$0.08-0.50/month
+
+Run `pytest tests/performance/ -v -s` to benchmark on your hardware.
+
 ## Configuration
 
 Environment variables:
