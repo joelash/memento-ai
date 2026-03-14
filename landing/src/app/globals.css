@@ -3,12 +3,26 @@
 :root {
   --background: #09090b;
   --foreground: #fafafa;
+  --muted: #a1a1aa;
+  --border: #27272a;
+  --surface: #18181b;
+  --purple: #a855f7;
+}
+
+.light {
+  --background: #ffffff;
+  --foreground: #18181b;
+  --muted: #71717a;
+  --border: #e4e4e7;
+  --surface: #f4f4f5;
+  --purple: #9333ea;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: system-ui, -apple-system, sans-serif;
+  transition: background 0.3s, color 0.3s;
 }
 
 /* Syntax highlighting */
@@ -18,3 +32,35 @@ body {
 .token-comment { color: #6b7280; }
 .token-variable { color: #f472b6; }
 .token-type { color: #fbbf24; }
+
+.light .token-keyword { color: #9333ea; }
+.light .token-string { color: #16a34a; }
+.light .token-function { color: #2563eb; }
+.light .token-comment { color: #9ca3af; }
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Fade in animation */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+/* Stagger delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }

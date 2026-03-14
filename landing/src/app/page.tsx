@@ -4,7 +4,8 @@ import { AnimatedGradientText } from "@/components/ui/animated-gradient-text";
 import { BentoCard, BentoGrid } from "@/components/ui/bento-grid";
 import { CodeTabs } from "@/components/ui/code-tabs";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
-import { motion } from "framer-motion";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { motion, useInView } from "framer-motion";
 import {
   Brain,
   GitBranch,
@@ -15,8 +16,11 @@ import {
   Zap,
   Code2,
   Server,
+  ArrowRight,
 } from "lucide-react";
-import Image from "next/image";
+import { useRef } from "react";
+
+const BOOKING_URL = "https://calendar.superhuman.com/book/11SzDnK01g1VgPEI2w/FtV5Q";
 
 const pythonCode = `<span class="token-keyword">from</span> engram_ai <span class="token-keyword">import</span> build_store, MemoryCreate
 
@@ -60,44 +64,72 @@ const mcpCode = `<span class="token-comment">// MCP Server for Claude Desktop, C
 
 <span class="token-comment">// Tools: remember, recall, list_memories, forget</span>`;
 
+// Animation variants
+const fadeInUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const stagger = {
+  visible: {
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+function AnimatedSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
+      variants={stagger}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export default function Home() {
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-[var(--background)] transition-colors">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm">
+      <nav className="fixed top-0 w-full z-50 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="engram-ai" width={32} height={32} className="rounded-md" />
-            <span className="font-semibold text-lg">
-              engram<span className="text-purple-400">-ai</span>
+          <a href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <Brain className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-semibold text-lg text-[var(--foreground)]">
+              engram<span className="text-purple-500">-ai</span>
             </span>
-          </div>
-          <div className="flex items-center gap-6">
-            <a href="https://github.com/joelash/engram-ai" className="text-zinc-400 hover:text-white transition-colors text-sm">
+          </a>
+          <div className="flex items-center gap-4">
+            <a href="https://github.com/joelash/engram-ai" className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors text-sm hidden sm:block">
               GitHub
             </a>
-            <a href="https://github.com/joelash/engram-ai#quick-start" className="text-zinc-400 hover:text-white transition-colors text-sm">
+            <a href="https://github.com/joelash/engram-ai#quick-start" className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors text-sm hidden sm:block">
               Docs
             </a>
-            <a
-              href="https://calendar.notion.so/meet/joelfriedman/ai-memory-consult"
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            >
-              Book a Call
-            </a>
+            <ThemeToggle />
           </div>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="pt-32 pb-20 px-6">
+      <section className="pt-32 pb-24 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-zinc-800 bg-zinc-900/50 text-sm text-zinc-400 mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--muted)] mb-8">
               <Sparkles className="w-4 h-4 text-purple-400" />
               <span>Now with TypeScript + MCP support</span>
             </div>
@@ -107,7 +139,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-5xl md:text-7xl font-bold tracking-tight mb-6"
+            className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-[var(--foreground)]"
           >
             Your AI agents keep{" "}
             <AnimatedGradientText>forgetting</AnimatedGradientText>.
@@ -119,7 +151,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-xl text-zinc-400 mb-10 max-w-2xl mx-auto"
+            className="text-xl text-[var(--muted)] mb-10 max-w-2xl mx-auto"
           >
             Production-grade semantic memory for AI agents. Works with Python, TypeScript, and any tool via MCP.
           </motion.p>
@@ -137,68 +169,68 @@ export default function Home() {
               Get Started
             </ShimmerButton>
             <a
-              href="https://calendar.notion.so/meet/joelfriedman/ai-memory-consult"
-              className="px-6 py-3 rounded-lg border border-zinc-700 text-white hover:bg-zinc-800 transition-colors font-medium"
+              href="#features"
+              className="px-6 py-3 rounded-lg border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--surface)] transition-colors font-medium"
             >
-              Book a Setup Call
+              Learn More
             </a>
           </motion.div>
         </div>
       </section>
 
       {/* Code Examples */}
-      <section className="py-20 px-6 border-t border-zinc-800">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Works everywhere</h2>
-            <p className="text-zinc-400">Python, TypeScript, or any tool via MCP</p>
-          </div>
+      <section className="py-24 px-6 border-t border-[var(--border)]">
+        <AnimatedSection className="max-w-6xl mx-auto">
+          <motion.div variants={fadeInUp} className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4 text-[var(--foreground)]">Works everywhere</h2>
+            <p className="text-[var(--muted)]">Python, TypeScript, or any tool via MCP</p>
+          </motion.div>
 
-          <CodeTabs
-            tabs={[
-              {
-                label: "Python",
-                icon: <Code2 className="w-4 h-4" />,
-                code: pythonCode,
-              },
-              {
-                label: "TypeScript",
-                icon: <Server className="w-4 h-4" />,
-                code: typescriptCode,
-              },
-              {
-                label: "MCP",
-                icon: <MessageSquare className="w-4 h-4" />,
-                code: mcpCode,
-              },
-            ]}
-          />
+          <motion.div variants={fadeInUp}>
+            <CodeTabs
+              tabs={[
+                {
+                  label: "Python",
+                  icon: <Code2 className="w-4 h-4" />,
+                  code: pythonCode,
+                },
+                {
+                  label: "TypeScript",
+                  icon: <Server className="w-4 h-4" />,
+                  code: typescriptCode,
+                },
+                {
+                  label: "MCP",
+                  icon: <MessageSquare className="w-4 h-4" />,
+                  code: mcpCode,
+                },
+              ]}
+            />
+          </motion.div>
 
           {/* Platform badges */}
-          <div className="flex flex-wrap items-center justify-center gap-4 mt-10">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-sm text-zinc-400">
-              <Globe className="w-4 h-4" />
-              Cloudflare Workers
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-sm text-zinc-400">
-              <Zap className="w-4 h-4" />
-              Neon Serverless
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-sm text-zinc-400">
-              <Layers className="w-4 h-4" />
-              Vercel AI SDK
-            </div>
-          </div>
-        </div>
+          <motion.div variants={fadeInUp} className="flex flex-wrap items-center justify-center gap-4 mt-10">
+            {[
+              { icon: Globe, label: "Cloudflare Workers" },
+              { icon: Zap, label: "Neon Serverless" },
+              { icon: Layers, label: "Vercel AI SDK" },
+            ].map(({ icon: Icon, label }) => (
+              <div key={label} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-sm text-[var(--muted)]">
+                <Icon className="w-4 h-4" />
+                {label}
+              </div>
+            ))}
+          </motion.div>
+        </AnimatedSection>
       </section>
 
       {/* Features Bento Grid */}
-      <section className="py-20 px-6 border-t border-zinc-800">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Built for production</h2>
-            <p className="text-zinc-400">Not another demo. Actually works.</p>
-          </div>
+      <section id="features" className="py-24 px-6 border-t border-[var(--border)]">
+        <AnimatedSection className="max-w-6xl mx-auto">
+          <motion.div variants={fadeInUp} className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4 text-[var(--foreground)]">Built for production</h2>
+            <p className="text-[var(--muted)]">Not another demo. Actually works.</p>
+          </motion.div>
 
           <BentoGrid>
             <BentoCard
@@ -228,75 +260,79 @@ export default function Home() {
               description="TypeScript client works with Neon serverless on Cloudflare Workers. Sub-100ms latency."
             />
           </BentoGrid>
-        </div>
+        </AnimatedSection>
       </section>
 
       {/* MCP Section */}
-      <section className="py-20 px-6 border-t border-zinc-800">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-purple-500/30 bg-purple-500/10 text-sm text-purple-400 mb-8">
-            <MessageSquare className="w-4 h-4" />
-            MCP Server Included
-          </div>
-          <h2 className="text-3xl font-bold mb-4">Memory for any tool</h2>
-          <p className="text-zinc-400 mb-10 max-w-2xl mx-auto">
+      <section className="py-24 px-6 border-t border-[var(--border)]">
+        <AnimatedSection className="max-w-4xl mx-auto text-center">
+          <motion.div variants={fadeInUp}>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-purple-500/30 bg-purple-500/10 text-sm text-purple-400 mb-8">
+              <MessageSquare className="w-4 h-4" />
+              MCP Server Included
+            </div>
+          </motion.div>
+          <motion.h2 variants={fadeInUp} className="text-3xl font-bold mb-4 text-[var(--foreground)]">
+            Memory for any tool
+          </motion.h2>
+          <motion.p variants={fadeInUp} className="text-[var(--muted)] mb-10 max-w-2xl mx-auto">
             The included MCP server lets Claude Desktop, Cursor, and other tools remember things across sessions. No code changes needed.
-          </p>
+          </motion.p>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+          <motion.div variants={fadeInUp} className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
             {["remember", "recall", "list_memories", "forget"].map((tool) => (
               <div
                 key={tool}
-                className="px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 font-mono text-sm text-purple-400"
+                className="px-4 py-3 rounded-lg bg-[var(--surface)] border border-[var(--border)] font-mono text-sm text-purple-400"
               >
                 {tool}
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 px-6 border-t border-zinc-800">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Need help implementing?</h2>
-          <p className="text-zinc-400 mb-10">
-            I&apos;ll add production-grade memory to your AI agent in 1-2 weeks.
-          </p>
-
-          <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8">
-            <div className="flex flex-wrap justify-center gap-8 mb-8">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400">$500</div>
-                <div className="text-sm text-zinc-400">Consult (2 hours)</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400">$3-5k</div>
-                <div className="text-sm text-zinc-400">Full implementation</div>
-              </div>
-            </div>
-            <a
-              href="https://calendar.notion.so/meet/joelfriedman/ai-memory-consult"
-              className="inline-flex items-center justify-center w-full md:w-auto bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
-            >
-              Book a Call →
-            </a>
-          </div>
-        </div>
+          </motion.div>
+        </AnimatedSection>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-zinc-800">
-        <div className="max-w-6xl mx-auto text-center text-sm text-zinc-500">
-          Built by{" "}
-          <a href="https://twitter.com/joelash" className="text-zinc-400 hover:text-white">
-            @joelash
-          </a>{" "}
-          ·{" "}
-          <a href="https://github.com/joelash/engram-ai" className="text-zinc-400 hover:text-white">
-            GitHub
-          </a>{" "}
-          · MIT License
+      <footer className="py-16 px-6 border-t border-[var(--border)]">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 mb-12">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <Brain className="w-5 h-5 text-white" />
+                </div>
+                <span className="font-semibold text-lg text-[var(--foreground)]">
+                  engram<span className="text-purple-500">-ai</span>
+                </span>
+              </div>
+              <p className="text-[var(--muted)] text-sm max-w-md">
+                Open source semantic memory for AI agents. MIT licensed.
+              </p>
+            </div>
+            <div className="md:text-right">
+              <h3 className="font-semibold mb-4 text-[var(--foreground)]">Need help implementing?</h3>
+              <p className="text-[var(--muted)] text-sm mb-4">
+                I&apos;ll add production-grade memory to your AI agent.
+              </p>
+              <a
+                href={BOOKING_URL}
+                className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
+              >
+                Book a call <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+          <div className="pt-8 border-t border-[var(--border)] text-center text-sm text-[var(--muted)]">
+            Built by{" "}
+            <a href="https://twitter.com/joelash" className="hover:text-[var(--foreground)] transition-colors">
+              @joelash
+            </a>{" "}
+            ·{" "}
+            <a href="https://github.com/joelash/engram-ai" className="hover:text-[var(--foreground)] transition-colors">
+              GitHub
+            </a>{" "}
+            · MIT License
+          </div>
         </div>
       </footer>
     </div>

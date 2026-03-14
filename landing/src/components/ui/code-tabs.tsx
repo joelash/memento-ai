@@ -19,20 +19,29 @@ export function CodeTabs({ tabs, className }: CodeTabsProps) {
   return (
     <div className={cn("w-full max-w-3xl mx-auto", className)}>
       {/* Tab headers */}
-      <div className="flex gap-1 p-1 bg-zinc-900 rounded-t-xl border border-b-0 border-zinc-800">
+      <div className="flex gap-1 p-1 bg-[var(--surface)] rounded-t-xl border border-b-0 border-[var(--border)]">
         {tabs.map((tab, index) => (
           <button
             key={index}
             onClick={() => setActiveTab(index)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+              "relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
               activeTab === index
-                ? "bg-zinc-800 text-white"
-                : "text-zinc-400 hover:text-zinc-300"
+                ? "text-[var(--foreground)]"
+                : "text-[var(--muted)] hover:text-[var(--foreground)]"
             )}
           >
-            {tab.icon}
-            {tab.label}
+            {activeTab === index && (
+              <motion.div
+                layoutId="activeTab"
+                className="absolute inset-0 bg-[var(--border)] rounded-lg"
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              {tab.icon}
+              {tab.label}
+            </span>
           </button>
         ))}
       </div>
@@ -43,7 +52,7 @@ export function CodeTabs({ tabs, className }: CodeTabsProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2 }}
-        className="relative bg-zinc-950 rounded-b-xl border border-zinc-800 overflow-hidden"
+        className="relative bg-[var(--background)] rounded-b-xl border border-[var(--border)] overflow-hidden"
       >
         <pre className="p-6 overflow-x-auto">
           <code
