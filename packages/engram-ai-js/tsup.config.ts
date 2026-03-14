@@ -19,8 +19,6 @@ export default defineConfig([
     sourcemap: true,
     target: 'es2022',
     external: ['@neondatabase/serverless', 'pg'],
-    banner: {
-      js: '#!/usr/bin/env node',
-    },
+    // Note: shebang added in src/mcp/cli.ts itself
   },
 ]);

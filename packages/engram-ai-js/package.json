@@ -1,5 +1,5 @@
 {
-  "name": "engram-ai",
+  "name": "memento-ai",
   "version": "0.1.0",
   "description": "Long-term semantic memory for AI agents (TypeScript)",
   "type": "module",
@@ -7,7 +7,7 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "engram-ai-mcp": "./dist/mcp/cli.js"
+    "memento-mcp": "dist/cli.js"
   },
   "exports": {
     ".": {
@@ -79,7 +79,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/joelash/engram-ai.git",
+    "url": "git+https://github.com/joelash/engram-ai.git",
     "directory": "packages/engram-ai-js"
   }
 }
