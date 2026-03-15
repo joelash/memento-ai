@@ -77,6 +77,8 @@ export class McpServer {
     return {
       name: this.name,
       version: this.version,
+      // Brain emoji as simple icon indicator
+      icon: '🧠',
       capabilities: {
         tools: {},
       },
