@@ -114,13 +114,15 @@ export default function Home() {
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
-            <img 
-              src={`${basePath}/memable-icon-transparent.png`} 
-              alt="memable" 
-              className="w-10 h-10 object-contain"
-            />
-            <span className="font-semibold text-lg text-[var(--foreground)]">
+          <a href="/" className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg overflow-hidden">
+              <img 
+                src={`${basePath}/memable-icon-v2.png`} 
+                alt="memable" 
+                className="w-full h-full object-cover scale-105"
+              />
+            </div>
+            <span className="font-semibold text-xl text-[var(--foreground)]">
               mem<span className="text-orange-500">able</span>
             </span>
           </a>

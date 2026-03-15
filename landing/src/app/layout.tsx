@@ -7,8 +7,7 @@ export const metadata: Metadata = {
   title: "memable — Memory for AI Agents",
   description: "Production-grade semantic memory for AI agents. Python, TypeScript, and MCP support. Open source.",
   icons: {
-    icon: `${basePath}/memable-icon.png`,
-    apple: `${basePath}/memable-icon.png`,
+    icon: `${basePath}/favicon.ico`,
   },
   openGraph: {
     title: "memable — Memory for AI Agents",
