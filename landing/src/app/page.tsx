@@ -27,6 +27,13 @@ import {
   Gamepad2,
   ShoppingCart,
   Wand2,
+  CircleHelp,
+  Database,
+  XCircle,
+  CheckCircle,
+  Bot,
+  Laptop,
+  Smartphone,
 } from "lucide-react";
 import { useRef } from "react";
 
@@ -222,7 +229,7 @@ export default function Home() {
             {/* The Problem */}
             <div className="text-center md:text-left">
               <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4 mx-auto md:mx-0">
-                <span className="text-2xl">🤷</span>
+                <CircleHelp className="w-6 h-6 text-red-500" />
               </div>
               <h3 className="font-semibold text-lg mb-2 text-[var(--foreground)]">The Problem</h3>
               <p className="text-[var(--muted)] text-sm leading-relaxed">
@@ -233,7 +240,7 @@ export default function Home() {
             {/* The Solution */}
             <div className="text-center md:text-left">
               <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-4 mx-auto md:mx-0">
-                <span className="text-2xl">💾</span>
+                <Database className="w-6 h-6 text-purple-500" />
               </div>
               <h3 className="font-semibold text-lg mb-2 text-[var(--foreground)]">The Solution</h3>
               <p className="text-[var(--muted)] text-sm leading-relaxed">
@@ -244,7 +251,7 @@ export default function Home() {
             {/* Why It Matters */}
             <div className="text-center md:text-left">
               <div className="w-12 h-12 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-4 mx-auto md:mx-0">
-                <span className="text-2xl">✨</span>
+                <Sparkles className="w-6 h-6 text-green-500" />
               </div>
               <h3 className="font-semibold text-lg mb-2 text-[var(--foreground)]">Why It Matters</h3>
               <p className="text-[var(--muted)] text-sm leading-relaxed">
@@ -258,12 +265,12 @@ export default function Home() {
             <p className="text-sm text-[var(--muted)] mb-4 text-center">Think of it like this:</p>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="p-4 rounded-lg bg-red-500/5 border border-red-500/10">
-                <p className="text-sm font-medium text-red-400 mb-2">❌ Without memable</p>
+                <p className="text-sm font-medium text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-4 h-4" /> Without memable</p>
                 <p className="text-sm text-[var(--muted)] italic">&quot;Hi! I&apos;m your AI assistant. What&apos;s your name?&quot;</p>
                 <p className="text-xs text-[var(--muted)] mt-2">(asks this every. single. time.)</p>
               </div>
               <div className="p-4 rounded-lg bg-green-500/5 border border-green-500/10">
-                <p className="text-sm font-medium text-green-400 mb-2">✅ With memable</p>
+                <p className="text-sm font-medium text-green-400 mb-2 flex items-center gap-1"><CheckCircle className="w-4 h-4" /> With memable</p>
                 <p className="text-sm text-[var(--muted)] italic">&quot;Hey Sarah! Last week you asked about React performance. Want to continue that?&quot;</p>
                 <p className="text-xs text-[var(--muted)] mt-2">(actually remembers you)</p>
               </div>
@@ -275,9 +282,15 @@ export default function Home() {
             <div className="flex flex-col md:flex-row items-center gap-6">
               <div className="flex items-center gap-3">
                 <div className="flex -space-x-2">
-                  <div className="w-10 h-10 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-lg">🤖</div>
-                  <div className="w-10 h-10 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-lg">💻</div>
-                  <div className="w-10 h-10 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-lg">📱</div>
+                  <div className="w-10 h-10 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center">
+                    <Bot className="w-5 h-5 text-[var(--muted)]" />
+                  </div>
+                  <div className="w-10 h-10 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center">
+                    <Laptop className="w-5 h-5 text-[var(--muted)]" />
+                  </div>
+                  <div className="w-10 h-10 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center">
+                    <Smartphone className="w-5 h-5 text-[var(--muted)]" />
+                  </div>
                 </div>
                 <div className="w-8 h-8 flex items-center justify-center">
                   <ArrowRight className="w-5 h-5 text-purple-400" />
@@ -540,8 +553,12 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-12 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
-                  <span className="text-white text-lg">🐘</span>
+                <div className="w-8 h-8 rounded-lg overflow-hidden">
+                  <img 
+                    src={`${basePath}/memable-icon-v2.png`} 
+                    alt="memable" 
+                    className="w-full h-full object-cover scale-105"
+                  />
                 </div>
                 <span className="font-semibold text-lg text-[var(--foreground)]">
                   mem<span className="text-orange-500">able</span>
