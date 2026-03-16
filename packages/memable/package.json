@@ -1,13 +1,13 @@
 {
   "name": "memable",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Long-term semantic memory for AI agents (TypeScript)",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "memable-mcp": "dist/cli.js"
+    "memable": "dist/cli.js"
   },
   "exports": {
     ".": {

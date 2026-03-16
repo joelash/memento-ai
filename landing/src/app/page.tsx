@@ -71,7 +71,7 @@ const mcpCode = `<span class="token-comment">// Zero-config: memories stored loc
   <span class="token-string">"mcpServers"</span>: {
     <span class="token-string">"memable"</span>: {
       <span class="token-string">"command"</span>: <span class="token-string">"npx"</span>,
-      <span class="token-string">"args"</span>: [<span class="token-string">"memable-mcp"</span>],
+      <span class="token-string">"args"</span>: [<span class="token-string">"memable"</span>],
       <span class="token-string">"env"</span>: {
         <span class="token-string">"OPENAI_API_KEY"</span>: <span class="token-string">"sk-..."</span>
       }
@@ -446,7 +446,7 @@ export default function Home() {
             <p className="text-xs text-[var(--muted)] text-center mb-3">Add to your config file:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-3xl mx-auto">
               {[
-                { name: "Claude Desktop", path: "~/Library/Application Support/Claude/claude_desktop_config.json", icon: "icons/claude.png" },
+                { name: "Claude Desktop", path: "~/Library/Application\\ Support/Claude/claude_desktop_config.json", icon: "icons/claude.png" },
                 { name: "Cursor", path: "~/.cursor/mcp.json", icon: "icons/cursor.png" },
                 { name: "Windsurf", path: "~/.codeium/windsurf/mcp_config.json", icon: "icons/windsurf.png" },
                 { name: "Continue", path: "~/.continue/config.json", icon: "icons/continue.png" },
