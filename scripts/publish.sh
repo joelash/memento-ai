@@ -101,7 +101,7 @@ echo ""
 # Build and publish Python
 echo -e "${GREEN}Building Python package...${NC}"
 rm -rf dist/
-python -m build
+python3 -m build
 
 echo ""
 echo -e "${GREEN}Publishing to PyPI...${NC}"
