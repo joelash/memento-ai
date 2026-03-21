@@ -140,6 +140,13 @@ export default function Home() {
             <a href="https://github.com/joelash/memable#quick-start" className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors text-sm hidden sm:block">
               Docs
             </a>
+            <a 
+              href="https://memable.ai" 
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 transition-colors text-sm font-medium"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Hosted
+            </a>
             <ThemeToggle />
           </div>
         </div>
@@ -584,16 +591,20 @@ export default function Home() {
           {/* Hosted option CTA */}
           <motion.div 
             variants={fadeInUp} 
-            className="mt-12 p-6 rounded-xl border border-dashed border-[var(--border)] bg-[var(--surface)]/50 max-w-lg mx-auto"
+            className="mt-12 p-6 rounded-xl border border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-blue-500/10 max-w-lg mx-auto"
           >
-            <p className="text-[var(--muted)] text-sm mb-3">
-              Don&apos;t want to manage your own database?
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+              <span className="text-sm font-medium text-purple-400">Hosted Version Available</span>
+            </div>
+            <p className="text-[var(--muted)] text-sm mb-4">
+              Don&apos;t want to manage your own database? Try memable hosted — dashboard, team spaces, and zero ops.
             </p>
             <a
-              href="mailto:joel@friedman.xyz?subject=Interested%20in%20hosted%20memable&body=I%27m%20interested%20in%20a%20hosted%20version%20of%20memable.%0A%0AMy%20use%20case%3A%20"
-              className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
+              href="https://memable.ai"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium transition-colors"
             >
-              Interested in a hosted option? Let me know <ArrowRight className="w-4 h-4" />
+              Try memable hosted <ArrowRight className="w-4 h-4" />
             </a>
           </motion.div>
         </AnimatedSection>
