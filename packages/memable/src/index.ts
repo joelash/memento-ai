@@ -57,12 +57,17 @@ export type {
 
 // Embeddings providers
 export {
+  createEmbeddings,
   heliconeEmbeddings,
   mockEmbeddings,
   openaiEmbeddings,
+  ollamaEmbeddings,
+  isOllamaAvailable,
+  hasOllamaModel,
 } from './embeddings.js';
 
-export type { OpenAIEmbeddingsConfig } from './embeddings.js';
+export type { OpenAIEmbeddingsConfig, EmbeddingProviderType } from './embeddings.js';
+export type { OllamaEmbeddingsConfig } from './embeddings-ollama.js';
 
 // SQLite store (for local/MCP use)
 export { createSQLiteStore, SQLiteMemoryStore } from './sqlite-store.js';

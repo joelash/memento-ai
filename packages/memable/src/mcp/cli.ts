@@ -12,17 +12,19 @@
  *   MEMABLE_API_URL  - Hosted API URL (e.g. https://api.memable.ai)
  *   MEMABLE_API_KEY  - Your API key from the dashboard (mem_xxx)
  * 
- *   # Local mode (requires OpenAI):
- *   DATABASE_URL     - PostgreSQL connection string (optional, uses SQLite if not set)
- *   OPENAI_API_KEY   - Required for embeddings in local mode
- *   ENGRAM_DB_PATH   - Custom SQLite path (default: ~/.engram/memories.db)
- *   ENGRAM_NAMESPACE - Default namespace (default: 'default')
+ *   # Local mode:
+ *   DATABASE_URL       - PostgreSQL connection string (optional, uses SQLite if not set)
+ *   MEMABLE_EMBEDDINGS - Force embedding provider: 'ollama', 'openai', or 'auto' (default)
+ *   OPENAI_API_KEY     - Required if using OpenAI embeddings
+ *   OLLAMA_HOST        - Ollama server URL (default: http://localhost:11434)
+ *   ENGRAM_DB_PATH     - Custom SQLite path (default: ~/.engram/memories.db)
+ *   ENGRAM_NAMESPACE   - Default namespace (default: 'default')
  */
 
 import { createInterface } from 'readline';
 import { MemoryStore } from '../store.js';
 import { SQLiteMemoryStore } from '../sqlite-store.js';
-import { openaiEmbeddings } from '../embeddings.js';
+import { createEmbeddings, type EmbeddingProviderType } from '../embeddings.js';
 import { McpServer } from './index.js';
 import { isHostedMode, createHostedClient, HostedMcpClient } from './hosted-client.js';
 
@@ -238,14 +240,18 @@ async function handleHostedToolCall(
  * Run in local mode - use local SQLite or Postgres storage.
  */
 async function runLocalMode() {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    console.error('Error: OPENAI_API_KEY environment variable is required');
-    console.error('Hint: For hosted mode, set MEMABLE_API_URL and MEMABLE_API_KEY instead.');
+  // Auto-detect embeddings provider (Ollama or OpenAI)
+  const providerType = (process.env.MEMABLE_EMBEDDINGS as EmbeddingProviderType) || 'auto';
+  
+  let embeddings;
+  try {
+    embeddings = await createEmbeddings(providerType);
+  } catch (error) {
+    console.error(`[memable] ${error instanceof Error ? error.message : String(error)}`);
+    console.error('[memable] Hint: For hosted mode, set MEMABLE_API_KEY instead.');
     process.exit(1);
   }
 
-  const embeddings = openaiEmbeddings({ apiKey });
   let store: AnyStore;
 
   // Auto-detect: Postgres if DATABASE_URL, else SQLite

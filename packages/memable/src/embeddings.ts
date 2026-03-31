@@ -1,8 +1,81 @@
 /**
- * Embeddings providers for engram-ai.
+ * Embeddings providers for memable.
  */
 
 import type { EmbeddingsProvider } from './store.js';
+import { isOllamaAvailable, hasOllamaModel, ollamaEmbeddings } from './embeddings-ollama.js';
+
+export { ollamaEmbeddings, isOllamaAvailable, hasOllamaModel } from './embeddings-ollama.js';
+
+export type EmbeddingProviderType = 'openai' | 'ollama' | 'auto';
+
+/**
+ * Auto-detect and create the best available embeddings provider.
+ * 
+ * Priority:
+ * 1. MEMABLE_EMBEDDINGS=ollama → force Ollama
+ * 2. MEMABLE_EMBEDDINGS=openai → force OpenAI
+ * 3. OPENAI_API_KEY set → use OpenAI (explicit user intent)
+ * 4. Auto-detect Ollama → use if available with model
+ * 5. Error with helpful message
+ */
+export async function createEmbeddings(
+  provider: EmbeddingProviderType = 'auto'
+): Promise<EmbeddingsProvider> {
+  // 1. Explicit MEMABLE_EMBEDDINGS=ollama
+  if (provider === 'ollama') {
+    if (!(await isOllamaAvailable())) {
+      throw new Error(
+        'MEMABLE_EMBEDDINGS=ollama but Ollama is not running.\n' +
+        'Start Ollama or remove MEMABLE_EMBEDDINGS to auto-detect.'
+      );
+    }
+    if (!(await hasOllamaModel())) {
+      throw new Error(
+        'MEMABLE_EMBEDDINGS=ollama but nomic-embed-text model not found.\n' +
+        'Run: ollama pull nomic-embed-text'
+      );
+    }
+    console.error('[memable] Using Ollama embeddings (forced via MEMABLE_EMBEDDINGS)');
+    return ollamaEmbeddings();
+  }
+
+  // 2. Explicit MEMABLE_EMBEDDINGS=openai
+  if (provider === 'openai') {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY required when MEMABLE_EMBEDDINGS=openai');
+    }
+    console.error('[memable] Using OpenAI embeddings (forced via MEMABLE_EMBEDDINGS)');
+    return openaiEmbeddings({ apiKey: process.env.OPENAI_API_KEY });
+  }
+
+  // 3. Explicit OPENAI_API_KEY = user wants OpenAI
+  if (process.env.OPENAI_API_KEY) {
+    console.error('[memable] Using OpenAI embeddings (OPENAI_API_KEY set)');
+    return openaiEmbeddings({ apiKey: process.env.OPENAI_API_KEY });
+  }
+
+  // 4. Auto-detect: try Ollama
+  if (await isOllamaAvailable()) {
+    if (await hasOllamaModel()) {
+      console.error('[memable] Using Ollama embeddings (auto-detected)');
+      return ollamaEmbeddings();
+    } else {
+      console.error('[memable] Ollama found but nomic-embed-text not installed.');
+      console.error('[memable] Run: ollama pull nomic-embed-text');
+      // Fall through to error
+    }
+  }
+
+  // 5. Nothing available
+  throw new Error(
+    'No embedding provider available.\n\n' +
+    'Options:\n' +
+    '  1. Install Ollama and run: ollama pull nomic-embed-text\n' +
+    '  2. Set OPENAI_API_KEY environment variable\n' +
+    '  3. Use hosted mode with MEMABLE_API_KEY'
+  );
+}
 
 /**
  * OpenAI embeddings configuration.
