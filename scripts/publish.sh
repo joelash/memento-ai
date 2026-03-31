@@ -115,8 +115,14 @@ cd packages/memable
 npm run build
 
 echo ""
+# Check npm login status
+if ! npm whoami &>/dev/null; then
+    echo -e "${YELLOW}Not logged in to npm. Running npm login...${NC}"
+    npm login
+fi
+
 echo -e "${GREEN}Publishing to npm...${NC}"
-echo -e "${YELLOW}(You will be prompted for OTP)${NC}"
+echo -e "${YELLOW}(You may be prompted for OTP)${NC}"
 npm publish --access public
 
 cd ../..
