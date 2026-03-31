@@ -1,16 +1,16 @@
-# memento-ai (TypeScript)
+# memable (TypeScript)
 
-Long-term semantic memory for AI agents. TypeScript implementation compatible with Python [memento-ai](https://github.com/joelash/memento-ai).
+Long-term semantic memory for AI agents. TypeScript implementation compatible with Python [memable](https://github.com/joelash/memable).
 
 ## Features
 
-- **Zero-config MCP** — just `npx memento-ai-mcp` with Claude Desktop/Cursor
+- **Zero-config MCP** — just `npx memable` with Claude Desktop/Cursor
 - **SQLite local storage** — no database setup required
 - **Postgres support** — scale up when you need it
 - **Semantic search** — find memories by meaning, not keywords
 - **Durability tiers** — core facts vs situational context vs episodic memories
 - **Version chains** — audit trail for memory updates
-- **Cross-language** — shares schema with Python memento-ai
+- **Cross-language** — shares schema with Python memable
 
 ## Quick Start: MCP Server
 
@@ -19,9 +19,9 @@ Add memory to Claude Desktop, Cursor, or any MCP tool — **zero config**:
 ```json
 {
   "mcpServers": {
-    "memento": {
+    "memable": {
       "command": "npx",
-      "args": ["memento-ai-mcp"],
+      "args": ["memable"],
       "env": {
         "OPENAI_API_KEY": "sk-..."
       }
@@ -30,7 +30,7 @@ Add memory to Claude Desktop, Cursor, or any MCP tool — **zero config**:
 }
 ```
 
-That's it! Memories are stored locally in `~/.memento/memories.db`.
+That's it! Memories are stored locally in `~/.memable/memories.db`.
 
 ### MCP with Postgres (optional)
 
@@ -39,9 +39,9 @@ For cloud sync or multi-device, add `DATABASE_URL`:
 ```json
 {
   "mcpServers": {
-    "memento": {
+    "memable": {
       "command": "npx",
-      "args": ["memento-ai-mcp"],
+      "args": ["memable"],
       "env": {
         "DATABASE_URL": "postgresql://...",
         "OPENAI_API_KEY": "sk-..."
@@ -84,9 +84,9 @@ The `boot` tool returns:
 ## Installation
 
 ```bash
-npm install memento-ai
+npm install memable
 # or
-pnpm add memento-ai
+pnpm add memable
 ```
 
 ## Programmatic Usage
@@ -94,11 +94,11 @@ pnpm add memento-ai
 ### SQLite (Zero Config)
 
 ```typescript
-import { SQLiteMemoryStore, openaiEmbeddings, Durability, MemoryType } from 'memento-ai';
+import { SQLiteMemoryStore, openaiEmbeddings, Durability, MemoryType } from 'memable';
 
 const store = new SQLiteMemoryStore({
   embeddings: openaiEmbeddings({ apiKey: process.env.OPENAI_API_KEY }),
-  // dbPath: '~/.memento/memories.db'  // optional, this is the default
+  // dbPath: '~/.memable/memories.db'  // optional, this is the default
 });
 
 await store.setup();
@@ -124,7 +124,7 @@ store.close();
 
 ```typescript
 import { neon } from '@neondatabase/serverless';
-import { MemoryStore, openaiEmbeddings, Durability, MemoryType } from 'memento-ai';
+import { MemoryStore, openaiEmbeddings, Durability, MemoryType } from 'memable';
 
 const sql = neon(process.env.DATABASE_URL!);
 const store = new MemoryStore({
@@ -145,11 +145,11 @@ await store.add(['user_123'], {
 
 ```typescript
 // OpenAI (default)
-import { openaiEmbeddings } from 'memento-ai';
+import { openaiEmbeddings } from 'memable';
 const embeddings = openaiEmbeddings();
 
 // Via Helicone (observability)
-import { heliconeEmbeddings } from 'memento-ai';
+import { heliconeEmbeddings } from 'memable';
 const embeddings = heliconeEmbeddings({
   heliconeKey: process.env.HELICONE_API_KEY!,
 });
@@ -162,6 +162,40 @@ const embeddings: EmbeddingsProvider = {
     return texts.map(() => new Array(1536).fill(0));
   },
 };
+```
+
+### Local Embeddings with Ollama
+
+For fully local operation (no OpenAI API required), use [Ollama](https://ollama.ai) with the `nomic-embed-text` model:
+
+```bash
+# Install Ollama, then pull the embedding model
+ollama pull nomic-embed-text
+```
+
+Then configure a custom embeddings provider:
+
+```typescript
+const ollamaEmbeddings: EmbeddingsProvider = {
+  dimensions: 768,  // nomic-embed-text dimension
+  async embed(texts) {
+    const results = await Promise.all(
+      texts.map(async (text) => {
+        const res = await fetch('http://localhost:11434/api/embeddings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: 'nomic-embed-text', prompt: text }),
+        });
+        const data = await res.json();
+        return data.embedding;
+      })
+    );
+    return results;
+  },
+};
+```
+
+> **Note:** When switching embedding models, you'll need to re-embed existing memories since different models produce incompatible vector dimensions.
 ```
 
 ## Schema
@@ -191,12 +225,12 @@ interface Memory {
 |----------|-------------|---------|
 | `OPENAI_API_KEY` | Required for embeddings | — |
 | `DATABASE_URL` | Postgres connection (optional) | Uses SQLite |
-| `ENGRAM_DB_PATH` | Custom SQLite path | `~/.memento/memories.db` |
+| `ENGRAM_DB_PATH` | Custom SQLite path | `~/.memable/memories.db` |
 | `ENGRAM_NAMESPACE` | Default namespace (comma-separated) | `default` |
 
 ## Cross-Language Compatibility
 
-This package uses the same database schema as Python memento-ai. You can:
+This package uses the same database schema as Python memable. You can:
 
 - Write memories from Python, read from TypeScript
 - Share a database between Python and TypeScript services
