@@ -1,5 +1,7 @@
 /**
  * Memory store implementations for different database drivers.
+ * 
+ * Compatible with both pg and @neondatabase/serverless.
  */
 
 import { v4 as uuidv4 } from 'uuid';
@@ -51,32 +53,53 @@ export interface MemoryStoreConfig {
  * Memory store with semantic search and version chains.
  * 
  * Compatible with Python engram-ai schema for cross-language use.
+ * Works with both pg and Neon serverless drivers.
  */
 export class MemoryStore {
   private sql: SqlExecutor;
   private embeddings: EmbeddingsProvider;
   private tablePrefix: string;
+  private _tableName: string;
 
   constructor(config: MemoryStoreConfig) {
     this.sql = config.sql;
     this.embeddings = config.embeddings;
     this.tablePrefix = config.tablePrefix ?? 'engram';
+    this._tableName = `${this.tablePrefix}_memories`;
   }
 
   private get tableName(): string {
-    return `${this.tablePrefix}_memories`;
+    return this._tableName;
+  }
+
+  /**
+   * Execute raw SQL with parameters (Neon-compatible).
+   * Table name is interpolated as a string since it's static/trusted.
+   */
+  private async rawQuery<T extends Record<string, unknown>>(
+    query: string,
+    params: unknown[] = []
+  ): Promise<T[]> {
+    // Build a tagged template call from raw SQL
+    // Split query by $1, $2, etc. placeholders
+    const parts = query.split(/\$\d+/);
+    const strings = Object.assign(parts, { raw: parts }) as TemplateStringsArray;
+    return this.sql<T>(strings, ...params);
   }
 
   /**
    * Create tables and indexes. Call once at startup.
    */
   async setup(): Promise<void> {
+    const table = this.tableName;
+    const dims = this.embeddings.dimensions;
+    
     // Create pgvector extension if not exists
-    await this.sql`CREATE EXTENSION IF NOT EXISTS vector`;
+    await this.rawQuery('CREATE EXTENSION IF NOT EXISTS vector');
 
-    // Create memories table
-    await this.sql`
-      CREATE TABLE IF NOT EXISTS ${this.sql`${this.tableName}`} (
+    // Create memories table (using raw SQL for Neon compatibility)
+    await this.rawQuery(`
+      CREATE TABLE IF NOT EXISTS ${table} (
         id UUID PRIMARY KEY,
         namespace TEXT[] NOT NULL,
         text TEXT NOT NULL,
@@ -94,22 +117,22 @@ export class MemoryStore {
         access_count INTEGER NOT NULL DEFAULT 0,
         tags TEXT[] NOT NULL DEFAULT '{}',
         metadata JSONB NOT NULL DEFAULT '{}',
-        embedding vector(${this.embeddings.dimensions})
+        embedding vector(${dims})
       )
-    `;
+    `);
 
     // Create indexes
-    await this.sql`
-      CREATE INDEX IF NOT EXISTS ${this.sql`idx_${this.tableName}_namespace`}
-      ON ${this.sql`${this.tableName}`} USING GIN (namespace)
-    `;
+    await this.rawQuery(`
+      CREATE INDEX IF NOT EXISTS idx_${table}_namespace
+      ON ${table} USING GIN (namespace)
+    `);
 
-    await this.sql`
-      CREATE INDEX IF NOT EXISTS ${this.sql`idx_${this.tableName}_embedding`}
-      ON ${this.sql`${this.tableName}`} 
+    await this.rawQuery(`
+      CREATE INDEX IF NOT EXISTS idx_${table}_embedding
+      ON ${table} 
       USING ivfflat (embedding vector_cosine_ops)
       WITH (lists = 100)
-    `;
+    `);
   }
 
   /**
@@ -141,32 +164,35 @@ export class MemoryStore {
     // Generate embedding
     const [embedding] = await this.embeddings.embed([memory.text]);
 
-    await this.sql`
-      INSERT INTO ${this.sql`${this.tableName}`} (
+    await this.rawQuery(
+      `INSERT INTO ${this.tableName} (
         id, namespace, text, durability, memory_type, confidence, source,
         valid_from, valid_until, supersedes, superseded_by, superseded_at,
         created_at, last_accessed_at, access_count, tags, metadata, embedding
       ) VALUES (
-        ${id}::uuid,
-        ${namespace},
-        ${memory.text},
-        ${memory.durability},
-        ${memory.memoryType},
-        ${memory.confidence},
-        ${memory.source},
-        ${memory.validFrom.toISOString()},
-        ${memory.validUntil?.toISOString() ?? null},
-        ${memory.supersedes}::uuid,
-        ${memory.supersededBy}::uuid,
-        ${memory.supersededAt?.toISOString() ?? null},
-        ${memory.createdAt.toISOString()},
-        ${memory.lastAccessedAt?.toISOString() ?? null},
-        ${memory.accessCount},
-        ${memory.tags},
-        ${JSON.stringify(memory.metadata)},
-        ${JSON.stringify(embedding)}::vector
-      )
-    `;
+        $1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10::uuid, $11::uuid, $12, $13, $14, $15, $16, $17, $18::vector
+      )`,
+      [
+        id,
+        namespace,
+        memory.text,
+        memory.durability,
+        memory.memoryType,
+        memory.confidence,
+        memory.source,
+        memory.validFrom.toISOString(),
+        memory.validUntil?.toISOString() ?? null,
+        memory.supersedes,
+        memory.supersededBy,
+        memory.supersededAt?.toISOString() ?? null,
+        memory.createdAt.toISOString(),
+        memory.lastAccessedAt?.toISOString() ?? null,
+        memory.accessCount,
+        memory.tags,
+        JSON.stringify(memory.metadata),
+        JSON.stringify(embedding),
+      ]
+    );
 
     return memory;
   }
@@ -175,11 +201,12 @@ export class MemoryStore {
    * Get a memory by ID.
    */
   async get(namespace: Namespace, id: string): Promise<Memory | null> {
-    const rows = await this.sql<MemoryRow>`
-      SELECT * FROM ${this.sql`${this.tableName}`}
-      WHERE id = ${id}::uuid AND namespace = ${namespace}
-      LIMIT 1
-    `;
+    const rows = await this.rawQuery<MemoryRow>(
+      `SELECT * FROM ${this.tableName}
+       WHERE id = $1::uuid AND namespace = $2
+       LIMIT 1`,
+      [id, namespace]
+    );
 
     if (rows.length === 0) return null;
     return this.rowToMemory(rows[0]);
@@ -212,20 +239,20 @@ export class MemoryStore {
 
     // Mark old memory as superseded
     const now = new Date();
-    await this.sql`
-      UPDATE ${this.sql`${this.tableName}`}
-      SET 
-        superseded_by = ${newMemory.id}::uuid,
-        superseded_at = ${now.toISOString()}
-      WHERE id = ${id}::uuid AND namespace = ${namespace}
-    `;
+    await this.rawQuery(
+      `UPDATE ${this.tableName}
+       SET superseded_by = $1::uuid, superseded_at = $2
+       WHERE id = $3::uuid AND namespace = $4`,
+      [newMemory.id, now.toISOString(), id, namespace]
+    );
 
     // Update new memory with supersedes reference
-    await this.sql`
-      UPDATE ${this.sql`${this.tableName}`}
-      SET supersedes = ${id}::uuid
-      WHERE id = ${newMemory.id}::uuid
-    `;
+    await this.rawQuery(
+      `UPDATE ${this.tableName}
+       SET supersedes = $1::uuid
+       WHERE id = $2::uuid`,
+      [id, newMemory.id]
+    );
 
     return { ...newMemory, supersedes: id };
   }
@@ -234,10 +261,11 @@ export class MemoryStore {
    * Delete a memory.
    */
   async delete(namespace: Namespace, id: string): Promise<boolean> {
-    const result = await this.sql`
-      DELETE FROM ${this.sql`${this.tableName}`}
-      WHERE id = ${id}::uuid AND namespace = ${namespace}
-    `;
+    const result = await this.rawQuery(
+      `DELETE FROM ${this.tableName}
+       WHERE id = $1::uuid AND namespace = $2`,
+      [id, namespace]
+    );
     return (result as any).count > 0;
   }
 
@@ -251,14 +279,15 @@ export class MemoryStore {
     const checkTime = query.validAt ?? new Date();
 
     // Search with cosine similarity
-    const rows = await this.sql<MemoryRow & { similarity: number }>`
-      SELECT *, 
-        1 - (embedding <=> ${JSON.stringify(queryEmbedding)}::vector) as similarity
-      FROM ${this.sql`${this.tableName}`}
-      WHERE namespace = ${namespace}
-      ORDER BY embedding <=> ${JSON.stringify(queryEmbedding)}::vector
-      LIMIT ${limit * 2}
-    `;
+    const rows = await this.rawQuery<MemoryRow & { similarity: number }>(
+      `SELECT *, 
+        1 - (embedding <=> $1::vector) as similarity
+       FROM ${this.tableName}
+       WHERE namespace = $2
+       ORDER BY embedding <=> $1::vector
+       LIMIT $3`,
+      [JSON.stringify(queryEmbedding), namespace, limit * 2]
+    );
 
     // Apply filters in JS (more flexible than SQL)
     const memories: Memory[] = [];
@@ -309,11 +338,12 @@ export class MemoryStore {
     namespace: Namespace,
     options?: { includeSuperseded?: boolean; includeExpired?: boolean }
   ): Promise<Memory[]> {
-    const rows = await this.sql<MemoryRow>`
-      SELECT * FROM ${this.sql`${this.tableName}`}
-      WHERE namespace = ${namespace}
-      ORDER BY created_at DESC
-    `;
+    const rows = await this.rawQuery<MemoryRow>(
+      `SELECT * FROM ${this.tableName}
+       WHERE namespace = $1
+       ORDER BY created_at DESC`,
+      [namespace]
+    );
 
     const now = new Date();
     return rows
@@ -327,6 +357,18 @@ export class MemoryStore {
         }
         return true;
       });
+  }
+
+  /**
+   * Count memories in a namespace.
+   */
+  async count(namespace: Namespace): Promise<number> {
+    const rows = await this.rawQuery<{ count: string }>(
+      `SELECT COUNT(*) as count FROM ${this.tableName}
+       WHERE namespace = $1`,
+      [namespace]
+    );
+    return parseInt(rows[0]?.count ?? '0', 10);
   }
 
   /**
