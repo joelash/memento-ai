@@ -19,6 +19,7 @@ from memable.backends.postgres import DEFAULT_EMBED_DIMS, DEFAULT_EMBED_MODEL
 from memable.schema import (
     Memory,
     MemoryCreate,
+    MemoryPatch,
     MemoryQuery,
     MemoryUpdate,
 )
@@ -436,6 +437,56 @@ class SemanticMemoryStore:
         except Exception:
             return False
 
+    def patch(
+        self,
+        namespace: tuple[str, ...],
+        memory_id: str | UUID,
+        patch: MemoryPatch,
+    ) -> Memory:
+        """
+        Patch a memory in-place without creating a version chain entry.
+
+        Use this for lightweight updates like adjusting confidence, fixing tags,
+        or adding metadata that don't warrant a new version.
+
+        For content changes (text), use update() instead.
+
+        Args:
+            namespace: Hierarchical namespace tuple.
+            memory_id: Memory UUID.
+            patch: Fields to update (only non-None fields are applied).
+
+        Returns:
+            The patched Memory.
+
+        Raises:
+            ValueError: If the memory doesn't exist.
+        """
+        memory = self.get(namespace, memory_id)
+        if memory is None:
+            raise ValueError(f"Memory {memory_id} not found")
+
+        if patch.tags is not None:
+            memory.tags = patch.tags
+        if patch.metadata is not None:
+            memory.metadata = {**memory.metadata, **patch.metadata}
+        if patch.confidence is not None:
+            memory.confidence = patch.confidence
+        if patch.durability is not None:
+            memory.durability = patch.durability
+        if patch.memory_type is not None:
+            memory.memory_type = patch.memory_type
+        if patch.updated_by is not None:
+            memory.updated_by = patch.updated_by
+
+        self._store.put(
+            namespace=namespace,
+            key=str(memory.id),
+            value=memory.to_store_value(),
+        )
+
+        return memory
+
     # -------------------------------------------------------------------------
     # Search
     # -------------------------------------------------------------------------
@@ -494,6 +545,15 @@ class SemanticMemoryStore:
 
             if query.tags and not any(t in memory.tags for t in query.tags):
                 continue
+
+            if query.metadata_filter:
+                skip = False
+                for key, value in query.metadata_filter.items():
+                    if memory.metadata.get(key) != value:
+                        skip = True
+                        break
+                if skip:
+                    continue
 
             memories.append(memory)
 
@@ -614,6 +674,7 @@ class SemanticMemoryStore:
         namespace: tuple[str, ...],
         include_superseded: bool = False,
         include_expired: bool = False,
+        metadata_filter: dict | None = None,
     ) -> list[Memory]:
         """
         List all memories in a namespace.
@@ -622,6 +683,7 @@ class SemanticMemoryStore:
             namespace: Hierarchical namespace tuple.
             include_superseded: Include old versions.
             include_expired: Include expired memories.
+            metadata_filter: Filter by metadata key-value pairs (all must match).
 
         Returns:
             List of memories.
@@ -646,6 +708,15 @@ class SemanticMemoryStore:
 
             if not include_expired and not memory.is_valid(at=now):
                 continue
+
+            if metadata_filter:
+                skip = False
+                for key, value in metadata_filter.items():
+                    if memory.metadata.get(key) != value:
+                        skip = True
+                        break
+                if skip:
+                    continue
 
             memories.append(memory)
 

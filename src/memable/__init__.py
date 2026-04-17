@@ -10,6 +10,7 @@ from memable.schema import (
     Durability,
     Memory,
     MemoryCreate,
+    MemoryPatch,
     MemoryQuery,
     MemorySource,
     MemoryType,
@@ -29,7 +30,7 @@ from memable.embeddings import (
     OllamaEmbeddings,
 )
 
-__version__ = "0.1.6"
+__version__ = "0.2.0"
 
 __all__ = [
     # Store factories
@@ -48,6 +49,7 @@ __all__ = [
     "Memory",
     "MemoryCreate",
     "MemoryUpdate",
+    "MemoryPatch",
     "MemoryQuery",
     "Durability",
     "MemorySource",
