@@ -117,6 +117,12 @@ class Memory(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
     """Additional metadata (source conversation, etc.)."""
 
+    created_by: str | None = None
+    """Who created this memory."""
+
+    updated_by: str | None = None
+    """Who last updated this memory."""
+
     def to_store_value(self) -> dict[str, Any]:
         """Convert to dict for storage in PostgresStore."""
         return {
@@ -138,6 +144,8 @@ class Memory(BaseModel):
             "access_count": self.access_count,
             "tags": self.tags,
             "metadata": self.metadata,
+            "created_by": self.created_by,
+            "updated_by": self.updated_by,
         }
 
     @classmethod
@@ -170,6 +178,8 @@ class Memory(BaseModel):
             access_count=value.get("access_count", 0),
             tags=value.get("tags", []),
             metadata=value.get("metadata", {}),
+            created_by=value.get("created_by"),
+            updated_by=value.get("updated_by"),
         )
 
     def is_valid(self, at: datetime | None = None) -> bool:
@@ -205,6 +215,7 @@ class MemoryCreate(BaseModel):
     valid_until: datetime | None = None
     tags: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
+    created_by: str | None = None
 
     def to_memory(self) -> Memory:
         """Convert to full Memory object."""
@@ -218,6 +229,7 @@ class MemoryCreate(BaseModel):
             valid_until=self.valid_until,
             tags=self.tags,
             metadata=self.metadata,
+            created_by=self.created_by,
         )
 
 
@@ -258,5 +270,35 @@ class MemoryQuery(BaseModel):
     tags: list[str] | None = None
     """Filter by tags (any match)."""
 
+    metadata_filter: dict[str, Any] | None = None
+    """Filter by metadata key-value pairs (all must match)."""
+
     valid_at: datetime | None = None
     """Check validity at this time (default: now)."""
+
+
+class MemoryPatch(BaseModel):
+    """Patch metadata/tags/confidence without creating a version chain entry.
+
+    Only non-None fields are applied. Use this for lightweight updates that
+    don't warrant a new version in the chain (e.g., fixing tags, adjusting
+    confidence, adding metadata).
+    """
+
+    tags: list[str] | None = None
+    """Replace tags (None = no change)."""
+
+    metadata: dict[str, Any] | None = None
+    """Merge into existing metadata (None = no change)."""
+
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    """Update confidence score (None = no change)."""
+
+    durability: Durability | None = None
+    """Update durability tier (None = no change)."""
+
+    memory_type: MemoryType | None = None
+    """Update memory type (None = no change)."""
+
+    updated_by: str | None = None
+    """Who is making this patch."""
