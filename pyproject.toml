@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "memable"
-version = "0.2.0"
+version = "0.2.1"
 description = "Reusable semantic memory library for LangGraph agents with PostgreSQL/pgvector and SQLite backends"
 readme = "README.md"
 license = "MIT"
@@ -48,6 +48,8 @@ dev = [
     "mypy>=1.10.0",
     "testcontainers[postgres]>=4.0.0",  # for integration tests
     "duckdb>=1.0.0",  # for DuckDB tests
+    "build>=1.0.0",
+    "twine>=5.0.0",
 ]
 all = [
     "memento-ai[sqlite,duckdb,dev]",
